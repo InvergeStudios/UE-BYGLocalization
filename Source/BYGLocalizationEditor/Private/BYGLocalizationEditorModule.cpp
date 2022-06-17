@@ -13,8 +13,9 @@
 #include "Editor/WorkspaceMenuStructure/Public/WorkspaceMenuStructure.h"
 #include "Widgets/Docking/SDockTab.h"
 
-#include "BYGLocalization/Public/BYGLocalizationSettings.h"
+#include "BYGLocalizationSettings.h"
 #include "BYGLocalizationUIStyle.h"
+#include "BYGLocalizationStatics.h"
 
 #define LOCTEXT_NAMESPACE "BYGLocalizationEditorModule"
 
@@ -61,6 +62,9 @@ void FBYGLocalizationEditorModule::StartupModule()
 		.SetTooltipText( NSLOCTEXT( "BYGLocalization", "TestTooltipText", "Open a window with info on localizations." ) )
 		.SetGroup( WorkspaceMenu::GetMenuStructure().GetDeveloperToolsMiscCategory() )
 		.SetIcon( FSlateIcon( FBYGLocalizationUIStyle::GetStyleSetName(), "BYGLocalization.TabIcon" ) );
+
+
+	FEditorDelegates::EndPIE.AddRaw(this, &FBYGLocalizationEditorModule::OnEndPIE);
 }
 
 void FBYGLocalizationEditorModule::ShutdownModule()
@@ -84,6 +88,25 @@ bool FBYGLocalizationEditorModule::HandleSettingsSaved()
 	}
 
 	return true;
+}
+
+
+
+void FBYGLocalizationEditorModule::OnEndPIE(const bool bSimulate)
+{
+	//"/Localization/loc_en.csv"
+	UBYGLocalizationSettings* Settings = GetMutableDefault<UBYGLocalizationSettings>();
+	FString Path = Settings->PrimaryLocalizationDirectory.Path;
+
+	if (Path.StartsWith("/Game"))
+	{
+		Path.Split("Game", nullptr, &Path);
+	}
+
+	Path = Path + "/" + Settings->FilenamePrefix + Settings->PrimaryLanguageCode + "." + Settings->PrimaryExtension;
+
+	UE_LOG(LogTemp, Log, TEXT("Path: %s"), *Path);
+	UBYGLocalizationStatics::SetLocalizationFromFile(Path);
 }
 
 

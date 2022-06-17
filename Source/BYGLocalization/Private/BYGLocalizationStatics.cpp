@@ -8,6 +8,7 @@
 
 #include "Internationalization/StringTableCore.h"
 #include "Internationalization/StringTableRegistry.h"
+#include "Internationalization/StringTable.h"
 
 bool UBYGLocalizationStatics::HasTextInTable( const FString& TableName, const FString& Key )
 {
@@ -88,5 +89,63 @@ bool UBYGLocalizationStatics::SetLocalizationFromFile( const FString& Path )
 #endif
 
 	return true;
+}
+
+bool UBYGLocalizationStatics::SetLocalizationFromAsset(UStringTable* StringTableAsset)
+{
+	const UBYGLocalizationSettings* Settings = GetDefault<UBYGLocalizationSettings>();
+
+	FStringTableRegistry::Get().UnregisterStringTable(FName(*Settings->StringtableID));
+	FStringTableRegistry::Get().RegisterStringTable(FName(*Settings->StringtableID), StringTableAsset->GetMutableStringTable());
+
+#if !WITH_EDITOR
+	// Only use UE4's locale changing system outside of the editor, or stuff gets weird
+	const FBYGLocaleInfo Basic = FBYGLocalizationModule::Get().GetLocalization()->GetCultureFromFilename(StringTableAsset->GetName());
+	FInternationalization::Get().SetCurrentCulture(Basic.LocaleCode);
+	FInternationalization::Get().SetCurrentLanguageAndLocale(Basic.LocaleCode);
+#endif
+
+	return true;
+}
+
+void UBYGLocalizationStatics::PrintStringTableData(UStringTable* StringTableAsset)
+{
+	if (!StringTableAsset)
+		return;
+
+	FStringTableConstRef StringTable = StringTableAsset->GetStringTable();
+
+	const FString SourceLocation = StringTableAsset->GetPathName();
+
+	StringTable->EnumerateSourceStrings([&](const FString& InKey, const FString& InSourceString) -> bool
+		{
+			UE_LOG(LogTemp, Log, TEXT("Key: %s -> SounceString: %s"), *InKey, *InSourceString);
+			
+			if (!InSourceString.IsEmpty())
+			{
+// 				FGatherableTextData& GatherableTextData = FindOrAddTextData(InSourceString);
+// 
+// 				FTextSourceSiteContext& SourceSiteContext = GatherableTextData.SourceSiteContexts[GatherableTextData.SourceSiteContexts.AddDefaulted()];
+// 				SourceSiteContext.KeyName = InKey;
+// 				SourceSiteContext.SiteDescription = SourceLocation;
+// 				SourceSiteContext.IsEditorOnly = false;
+// 				SourceSiteContext.IsOptional = false;
+
+				StringTable->EnumerateMetaData(InKey, [&](const FName InMetaDataId, const FString& InMetaData)
+					{
+						UE_LOG(LogTemp, Log, TEXT("MetaDataId: %s -> MetaData: %s"), *InMetaDataId.ToString(), *InMetaData);
+						//SourceSiteContext.InfoMetaData.SetStringField(InMetaDataId.ToString(), InMetaData);
+						return true; // continue enumeration
+					});
+			}
+
+			return true; // continue enumeration
+		});
+}
+
+void UBYGLocalizationStatics::SetTextAsStringTableEntry(FText &Text, const FName &StringTableID, const FString &Key)
+{
+	//FText::FText(FName InTableId, FString InKey, const EStringTableLoadingPolicy InLoadingPolicy)
+	Text = FText::FromStringTable(StringTableID, Key, EStringTableLoadingPolicy::FindOrLoad);
 }
 

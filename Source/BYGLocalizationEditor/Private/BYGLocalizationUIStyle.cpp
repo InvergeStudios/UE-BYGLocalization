@@ -46,7 +46,7 @@ void FBYGLocalizationUIStyle::Initialize()
 	StyleSet->SetCoreContentRoot( FPaths::EngineContentDir() / TEXT( "Slate" ) );
 
 	// BYGLocalizationBlock
-	StyleSet->Set( "BYGLocalization.TabIcon", new IMAGE_BRUSH( "Icon20", Icon20x20 ) );
+	StyleSet->Set( "BYGLocalization.TabIcon", new IMAGE_BRUSH( "Icon20", Icon16x16 ) );
 	StyleSet->Set( "BYGLocalization.OpenFile", new IMAGE_BRUSH( "OpenFile20", Icon20x20 ) );
 	StyleSet->Set( "BYGLocalization.OpenFolder", new IMAGE_BRUSH( "OpenFolder20", Icon20x20 ) );
 

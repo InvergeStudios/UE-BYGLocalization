@@ -6,6 +6,8 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "BYGLocalizationStatics.generated.h"
 
+class UStringTable;
+
 UCLASS()
 class BYGLOCALIZATION_API UBYGLocalizationStatics : public UBlueprintFunctionLibrary
 {
@@ -24,5 +26,14 @@ public:
 	// Need to specify a path and not just a locale code because fan-made localizations
 	// can lead to multiple localizations of the same locale.
 	UFUNCTION( BlueprintCallable, Category = "BYG|Localization" )
-	static bool SetLocalizationFromFile( const FString& Path );
+	static bool SetLocalizationFromFile(const FString& Path);
+
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localization")
+	static bool SetLocalizationFromAsset(UStringTable* StringTableAsset);
+
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localization")
+	static void PrintStringTableData(UStringTable* StringTableAsset);
+
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localization", meta = (AutoCreateRefTerm = "StringTableID,Key"))
+	static void SetTextAsStringTableEntry(UPARAM(ref) FText &Text, const FName &StringTableID, const FString &Key);
 };

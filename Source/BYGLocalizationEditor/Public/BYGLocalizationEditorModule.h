@@ -11,6 +11,9 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
+	void OnEndPIE(const bool bSimulate);
+
 protected:
 	bool HandleSettingsSaved();
+
 };

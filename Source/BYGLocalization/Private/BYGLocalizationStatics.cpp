@@ -6,9 +6,11 @@
 #include "BYGLocalizationModule.h"
 #include "BYGLocalization.h"
 
-#include "Internationalization/StringTableCore.h"
-#include "Internationalization/StringTableRegistry.h"
-#include "Internationalization/StringTable.h"
+#include <Internationalization/StringTableCore.h>
+#include <Internationalization/StringTableRegistry.h>
+#include <Internationalization/StringTable.h>
+#include <DesktopPlatform/Public/DesktopPlatformModule.h>
+#include <EditorDirectories.h>
 
 bool UBYGLocalizationStatics::HasTextInTable( const FString& TableName, const FString& Key )
 {
@@ -121,6 +123,11 @@ void UBYGLocalizationStatics::PrintStringTableData(UStringTable* StringTableAsse
 		{
 			UE_LOG(LogTemp, Log, TEXT("Key: %s -> SounceString: %s"), *InKey, *InSourceString);
 			
+			FString TestSounceString;
+			StringTable->GetSourceString(InKey, TestSounceString);
+			UE_LOG(LogTemp, Log, TEXT("TestSounceString: %s"), *TestSounceString);
+
+
 			if (!InSourceString.IsEmpty())
 			{
 // 				FGatherableTextData& GatherableTextData = FindOrAddTextData(InSourceString);
@@ -147,5 +154,107 @@ void UBYGLocalizationStatics::SetTextAsStringTableEntry(FText &Text, const FName
 {
 	//FText::FText(FName InTableId, FString InKey, const EStringTableLoadingPolicy InLoadingPolicy)
 	Text = FText::FromStringTable(StringTableID, Key, EStringTableLoadingPolicy::FindOrLoad);
+}
+
+void UBYGLocalizationStatics::ImportCSVToStringTable(FString CSVFilePath, UStringTable* StringTableAsset)
+{
+	if (StringTableAsset && FPaths::FileExists(CSVFilePath))
+	{
+#if WITH_EDITOR
+		StringTableAsset->Modify();
+#endif
+		StringTableAsset->GetMutableStringTable()->ImportStrings(CSVFilePath);
+	}
+}
+
+void UBYGLocalizationStatics::ExportStringTableToCSV(UStringTable* StringTableAsset, FString CSVFilePath)
+{
+	if (StringTableAsset && FPaths::FileExists(CSVFilePath))
+	{
+		StringTableAsset->GetStringTable()->ExportStrings(CSVFilePath);
+	}
+}
+
+void UBYGLocalizationStatics::ImportDefaultCSVToStringTable()
+{
+	const UBYGLocalizationSettings* Settings = GetDefault<UBYGLocalizationSettings>();
+
+	UStringTable* DefaultStringTable = Settings->MainStringTable.Get();
+
+	if (!DefaultStringTable)
+		return;
+
+	FString FileName = FString::Printf(TEXT("%s%s%s.%s"),
+		*Settings->FilenamePrefix,
+		*Settings->PrimaryLanguageCode,
+		*Settings->FilenameSuffix,
+		*Settings->PrimaryExtension);
+
+	FString FullFilename = FString::Printf(TEXT("%s/%s"),
+		*Settings->PrimaryLocalizationDirectory.Path,
+		*FileName);
+
+	FullFilename = FullFilename.Replace(TEXT("/Game/"), *FPaths::ProjectContentDir());
+
+	ImportCSVToStringTable(FullFilename, DefaultStringTable);
+}
+
+void UBYGLocalizationStatics::ExportDefaultStringTableToCSV()
+{
+	const UBYGLocalizationSettings* Settings = GetDefault<UBYGLocalizationSettings>();
+
+	UStringTable* DefaultStringTable = Settings->MainStringTable.Get();
+
+	if (!DefaultStringTable)
+		return;
+
+	FString FileName = FString::Printf(TEXT("%s%s%s.%s"),
+		*Settings->FilenamePrefix,
+		*Settings->PrimaryLanguageCode,
+		*Settings->FilenameSuffix,
+		*Settings->PrimaryExtension);
+
+	FString FullFilename = FString::Printf(TEXT("%s/%s"),
+		*Settings->PrimaryLocalizationDirectory.Path,
+		*FileName);
+
+	FullFilename = FullFilename.Replace(TEXT("/Game/"), *FPaths::ProjectContentDir());
+
+	ExportStringTableToCSV(DefaultStringTable, FullFilename);
+}
+
+void UBYGLocalizationStatics::UpdateLocalizationTranslations()
+{
+	FBYGLocalizationModule::Get().UpdateTranslations();
+}
+
+void UBYGLocalizationStatics::ReloadLocalization()
+{
+	FBYGLocalizationModule::Get().ReloadLocalizations();
+}
+
+void UBYGLocalizationStatics::AddNewEntryToTheLocalization(FString Key, FString SourceString, FString Comment)
+{
+	const UBYGLocalizationSettings* Settings = GetDefault<UBYGLocalizationSettings>();
+
+	FStringTablePtr StringTable = FStringTableRegistry::Get().FindMutableStringTable(TEXT("Game"));
+
+	if (StringTable.IsValid())
+	{
+		StringTable->SetSourceString(Key, SourceString);
+		StringTable->SetMetaData(Key, TEXT("Comment"), Comment);
+		StringTable->SetMetaData(Key, TEXT("Primary"), SourceString);
+		StringTable->SetMetaData(Key, TEXT("Status"), FString("New Key Added from UE4"));
+	}
+}
+
+void UBYGLocalizationStatics::UpdateCSV(FString Filename)
+{
+	FStringTablePtr StringTable = FStringTableRegistry::Get().FindMutableStringTable(TEXT("Game"));
+
+	if (StringTable.IsValid())
+	{
+		StringTable->ExportStrings(Filename);
+	}
 }
 

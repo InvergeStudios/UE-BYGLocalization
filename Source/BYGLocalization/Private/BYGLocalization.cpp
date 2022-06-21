@@ -111,7 +111,9 @@ bool UBYGLocalization::UpdateTranslations()
 	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
 
 	FBYGLocaleData PrimaryData;
-	const FString FullFilename = FPaths::Combine( Settings->PrimaryLocalizationDirectory.Path, GetFilenameFromLanguageCode( Settings->PrimaryLanguageCode ) );
+	FString FullFilename = FPaths::Combine( Settings->PrimaryLocalizationDirectory.Path, GetFilenameFromLanguageCode( Settings->PrimaryLanguageCode ) );
+	FullFilename = FullFilename.Replace(TEXT("/Game/"), *FPaths::ProjectContentDir());
+
 	const bool bSucceeded = GetLocalizationDataFromFile( FullFilename, PrimaryData );
 
 	if ( !bSucceeded )
@@ -128,7 +130,14 @@ bool UBYGLocalization::UpdateTranslations()
 	for ( const FString& FileWithPath : Files )
 	{
 		const FString FullPath = FPaths::Combine( FPaths::ProjectContentDir(), FileWithPath );
-		UpdateTranslationFile(FileWithPath, PrimaryEntriesInOrder, PrimaryKeyToIndex );
+		if (FileWithPath.Contains("Debug", ESearchCase::IgnoreCase, ESearchDir::FromStart))
+		{
+			UpdateDebugFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
+		}
+		else
+		{
+			UpdateTranslationFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex );
+		}
 	}
 
 	return true;
@@ -236,6 +245,146 @@ bool UBYGLocalization::UpdateTranslationFile( const FString& Path,
 	WriteCSV( NewEntriesInOrder, Path );
 
 	return true;
+}
+
+bool UBYGLocalization::UpdateDebugFile(const FString& Path, const TArray<FBYGLocalizationEntry>* PrimaryEntriesInOrder, const TMap<FString, int32>* PrimaryKeyToIndex)
+{
+	QUICK_SCOPE_CYCLE_COUNTER(STAT_BYGLocalization_UpdateTranslationFile);
+
+	// Source file is Primary
+	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
+	const FString CultureName = RemovePrefixSuffix(Path);
+
+	if (CultureName == Settings->PrimaryLanguageCode || CultureName != "Debug")
+		return false;
+
+	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+
+
+	const FFileStatData StatData = PlatformFile.GetStatData(*Path);
+	if (StatData.bIsValid && StatData.bIsReadOnly)
+	{
+		UE_LOG(LogBYGLocalization, Warning, TEXT("Cannot write to read-only file"));
+		return false;
+	}
+
+	FBYGLocaleData LocalData;
+	const bool bSucceeded = GetLocalizationDataFromFile(Path, LocalData);
+	if (!bSucceeded)
+		return false;
+	const TArray<FBYGLocalizationEntry>* LocalEntriesInOrder = LocalData.GetEntriesInOrder();
+	const TMap<FString, int32>* LocalKeyToIndex = LocalData.GetKeyToIndex();
+	// Find any keys that are missing
+	if (LocalEntriesInOrder->Num() == 0)
+	{
+		UE_LOG(LogBYGLocalization, Warning, TEXT("No Entries found when loading %s"), *Path);
+	}
+
+	// Will reorder to match
+	TArray<FBYGLocalizationEntry> NewEntriesInOrder;
+
+	for (const FBYGLocalizationEntry& PrimaryEntry : *PrimaryEntriesInOrder)
+	{
+		FBYGLocalizationEntry OldLocalizedEntry;
+		if (LocalKeyToIndex->Contains(PrimaryEntry.Key)
+			&& (*LocalKeyToIndex)[PrimaryEntry.Key] >= 0
+			&& (*LocalKeyToIndex)[PrimaryEntry.Key] < LocalEntriesInOrder->Num())
+		{
+			OldLocalizedEntry = (*LocalEntriesInOrder)[(*LocalKeyToIndex)[PrimaryEntry.Key]];
+		}
+
+		FBYGLocalizationEntry NewLocalizedEntry;
+		NewLocalizedEntry.Key = PrimaryEntry.Key;
+		NewLocalizedEntry.Primary = PrimaryEntry.Translation;
+
+		if (OldLocalizedEntry.Translation.IsEmpty() && !PrimaryEntry.Translation.IsEmpty())
+		{
+			UE_LOG(LogBYGLocalization, Warning, TEXT("%s missing key '%s', adding."), *CultureName, *PrimaryEntry.Key);
+			// We want to show Primary until they replace the new key with a correct translation, so for now just write in the Primary to the translation field
+			
+			GenerateDebugTranslation(PrimaryEntry.Translation, NewLocalizedEntry.Translation);
+			NewLocalizedEntry.Status = EBYGLocEntryStatus::New;
+		}
+		// The display text in the master Primary is not the same as the Primary in the localization, something was modified
+		else if (OldLocalizedEntry.Primary != PrimaryEntry.Translation)
+		{
+			NewLocalizedEntry = OldLocalizedEntry;
+			NewLocalizedEntry.Primary = PrimaryEntry.Translation;
+			const FString OldPrimary = OldLocalizedEntry.Primary;
+			if (!OldPrimary.IsEmpty())
+			{
+				UE_LOG(LogBYGLocalization, Warning, TEXT("Lang %s: Modified key '%s'. Was '%s', now is '%s'"), *CultureName, *PrimaryEntry.Key, *OldPrimary, *PrimaryEntry.Translation);
+				NewLocalizedEntry.Status = EBYGLocEntryStatus::Modified;
+				NewLocalizedEntry.OldPrimary = OldPrimary;
+				
+				GenerateDebugTranslation(PrimaryEntry.Translation, NewLocalizedEntry.Translation);
+			}
+		}
+		else
+		{
+			NewLocalizedEntry = OldLocalizedEntry;
+
+			if (!NewLocalizedEntry.Translation.StartsWith("["))
+			{
+				GenerateDebugTranslation(OldLocalizedEntry.Translation, NewLocalizedEntry.Translation);
+			}
+		}
+
+		NewEntriesInOrder.Add(NewLocalizedEntry);
+
+	}
+
+	for (const FBYGLocalizationEntry& Entry : *LocalEntriesInOrder)
+	{
+		if (!PrimaryKeyToIndex->Contains(Entry.Key))
+		{
+			// TODO
+			UE_LOG(LogBYGLocalization, Warning, TEXT("%s has unused key '%s', marking deprecated."), *CultureName, *Entry.Key);
+			FBYGLocalizationEntry NewEntry = Entry;
+			NewEntry.Status = EBYGLocEntryStatus::Deprecated;
+			NewEntriesInOrder.Add(NewEntry);
+		}
+	}
+
+	// Output the file
+	WriteCSV(NewEntriesInOrder, Path);
+
+	return true;
+}
+
+void UBYGLocalization::GenerateDebugTranslation(const FString& PrimaryEntry, FString &DebugTranslation)
+{
+	DebugTranslation = PrimaryEntry;
+
+	const int32 Length = PrimaryEntry.Len();
+	const int32 VowelsToAdd = FMath::CeilToInt((float)Length * 1.5f) - Length;
+
+	int32 TotalVowels = 0;
+	//Total vowels
+	for (int32 i = 0; i < Length; i++)
+	{
+		FString Char = PrimaryEntry.Mid(i, 1);
+		if (Char.Contains("A") || Char.Contains("E") || Char.Contains("I") || Char.Contains("O") || Char.Contains("U"))
+		{
+			TotalVowels++;
+		}
+	}
+
+	int32 ExtraVowelsPerPosition = FMath::CeilToInt((float)VowelsToAdd / TotalVowels);
+
+	for (int32 i = Length - 1; i >= 0; i--)
+	{
+		FString Char = PrimaryEntry.Mid(i, 1).ToLower();
+		if (Char.Contains("A") || Char.Contains("E") || Char.Contains("I") || Char.Contains("O") || Char.Contains("U"))
+		{
+			for (int32 j = 0; j < ExtraVowelsPerPosition; j++)
+			{
+				DebugTranslation.InsertAt(i + 1, Char);
+			}
+		}
+	}
+
+	DebugTranslation = "[" + DebugTranslation + "]";
 }
 
 // Load CSV file into our data structure for ease of use
@@ -478,12 +627,22 @@ bool UBYGLocalization::WriteCSV( const TArray<FBYGLocalizationEntry>& Entries, c
 		}
 		ExportedStatus = ReplaceCharWithEscapedChar( ExportedStatus );
 
-		CSVFileWriter->Logf( TEXT( "%s,%s,%s,%s,%s" ),
+// 		CSVFileWriter->Logf( TEXT( "%s,%s,%s,%s,%s" ),
+// 			*ExportedKey,
+// 			*LazyWrap( ExportedTranslation, bQuote),
+// 			*LazyWrap( ExportedComment, bQuote ),
+// 			*LazyWrap( ExportedPrimary, bQuote ),
+// 			*LazyWrap( ExportedStatus, bQuote ) );
+
+		FString CSVEntry = FString::Printf(TEXT("%s,%s,%s,%s,%s"),
 			*ExportedKey,
-			*LazyWrap( ExportedTranslation, bQuote),
-			*LazyWrap( ExportedComment, bQuote ),
-			*LazyWrap( ExportedPrimary, bQuote ),
-			*LazyWrap( ExportedStatus, bQuote ) );
+			*LazyWrap(ExportedTranslation, bQuote),
+			*LazyWrap(ExportedComment, bQuote),
+			*LazyWrap(ExportedPrimary, bQuote),
+			*LazyWrap(ExportedStatus, bQuote));
+
+		FTCHARToUTF8 UTF8String(*(MoveTemp(CSVEntry) + LINE_TERMINATOR));
+		CSVFileWriter->Serialize((UTF8CHAR*)UTF8String.Get(), UTF8String.Length());
 	}
 
 	CSVFileWriter->Close();

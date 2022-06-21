@@ -17,6 +17,7 @@ public:
 	bool SupportsDynamicReloading() override { return true; }
 
 	void ReloadLocalizations();
+	void UpdateTranslations();
 
 	static inline FBYGLocalizationModule& Get()
 	{

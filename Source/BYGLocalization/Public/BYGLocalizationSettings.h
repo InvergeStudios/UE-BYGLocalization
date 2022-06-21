@@ -9,6 +9,8 @@
 #include "Windows/WindowsPlatformProcess.h"
 #include "BYGLocalizationSettings.generated.h"
 
+class UStringTable;
+
 UENUM()
 enum class EBYGQuotingPolicy : uint8
 {
@@ -81,6 +83,9 @@ public:
 	UPROPERTY( config, EditAnywhere, Category = "Language" )
 	FString PrimaryLanguageCode = "en";
 
+	UPROPERTY(config, EditAnywhere, Category = "Assets")
+	TSoftObjectPtr<UStringTable> MainStringTable;
+
 	// Localization files will be searched for in this directory
 	UPROPERTY( config, EditAnywhere, Category = "File Settings", meta = ( ContentDir ) )
 	FDirectoryPath PrimaryLocalizationDirectory;
@@ -115,6 +120,10 @@ public:
 	// Creates a backup of the original file when changing any localization files
 	UPROPERTY( config, EditAnywhere, Category = "File Settings" )
 	bool bCreateBackup = true;
+
+	// Creates a backup of the original file when changing any localization files
+	UPROPERTY(config, EditAnywhere, Category = "File Settings")
+	bool bForceUpdateTranslations = true;
 
 	// If true, the CSV update process ignores if a file is marked "read-only" and will overwrite it anyway
 	UPROPERTY( config, EditAnywhere, AdvancedDisplay, Category = "File Settings" )

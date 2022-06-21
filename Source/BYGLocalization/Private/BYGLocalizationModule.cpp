@@ -31,7 +31,7 @@ void FBYGLocalizationModule::StartupModule()
 		bDoUpdate = true && bHasCommandLineFlag;
 	}
 #endif
-	if ( bDoUpdate )
+	if ( bDoUpdate || Settings->bForceUpdateTranslations)
 	{
 		Loc->UpdateTranslations();
 	}
@@ -56,7 +56,16 @@ void FBYGLocalizationModule::ReloadLocalizations()
 
 	// GameStrings is the ID we use for our currently-used string table
 	// For example it could be French if the player has chosen to use French
-	const FString Filename = Loc->GetFileWithPathFromLanguageCode( Settings->PrimaryLanguageCode );
+	FString Filename = Loc->GetFileWithPathFromLanguageCode(Settings->PrimaryLanguageCode);
+
+	UE_LOG(LogTemp, Warning, TEXT("Load Localization file: %s"), *Filename);
+
+	// Remove any project paths from the filename because Internal_LocTableFromFile will factor them in
+	Filename = Filename.Replace(TEXT("/Game/"), TEXT(""));
+
+	UE_LOG(LogTemp, Warning, TEXT("Load Localization file fixed: %s"), *Filename);
+
+
 	StringTableIDs.Add( FName( *Settings->StringtableID ) );
 	FStringTableRegistry::Get().Internal_LocTableFromFile( StringTableIDs[ 0 ], Settings->StringtableNamespace, Filename, FPaths::ProjectContentDir() );
 
@@ -68,6 +77,14 @@ void FBYGLocalizationModule::ReloadLocalizations()
 		FStringTableRegistry::Get().Internal_LocTableFromFile( StringTableIDs[ 1 ], Settings->StringtableNamespace, Filename, FPaths::ProjectContentDir() );
 	}
 #endif
+}
+
+void FBYGLocalizationModule::UpdateTranslations()
+{
+	if (Loc.IsValid())
+	{
+		Loc->UpdateTranslations();
+	}
 }
 
 void FBYGLocalizationModule::UnloadLocalizations()

@@ -108,7 +108,9 @@ protected:
 	TSharedPtr<const IBYGLocalizationSettingsProvider> SettingsProvider;
 
 	bool GetLocalizationDataFromFile( const FString& Filename, FBYGLocaleData& LocalizationData ) const;
-	bool UpdateTranslationFile( const FString& Path, const TArray<FBYGLocalizationEntry>* PrimaryEntriesInOrder, const TMap<FString, int32>* PrimaryKeyToIndex );
+	bool UpdateTranslationFile(const FString& Path, const TArray<FBYGLocalizationEntry>* PrimaryEntriesInOrder, const TMap<FString, int32>* PrimaryKeyToIndex);
+	bool UpdateDebugFile(const FString& Path, const TArray<FBYGLocalizationEntry>* PrimaryEntriesInOrder, const TMap<FString, int32>* PrimaryKeyToIndex);
+	void GenerateDebugTranslation(const FString& PrimaryEntry, FString &DebugTranslation);
 
 	TArray<FString> GetAllLocalizationFiles() const;
 	// Writes datastructure to CSV but with explicit quoting etc.

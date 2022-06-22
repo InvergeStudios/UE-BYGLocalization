@@ -23,31 +23,11 @@ public:
 
 	// Use this to change the current localization, for example if the player changes their
 	// preferred locale.
-	// Need to specify a path and not just a locale code because fan-made localizations
-	// can lead to multiple localizations of the same locale.
-	UFUNCTION( BlueprintCallable, Category = "BYG|Localization" )
-	static bool SetLocalizationFromFile(const FString& Path);
-
-	UFUNCTION(BlueprintCallable, Category = "BYG|Localization|String Tables")
-	static bool SetLocalizationFromAsset(UStringTable* StringTableAsset);
-
-	UFUNCTION(BlueprintCallable, Category = "BYG|Localization|String Tables")
-	static void PrintStringTableData(UStringTable* StringTableAsset);
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localization")
+	static bool SetLocalizationByCode(const FString& Code);
 
 	UFUNCTION(BlueprintCallable, Category = "BYG|Localization|String Tables", meta = (AutoCreateRefTerm = "StringTableID,Key"))
 	static void SetTextAsStringTableEntry(UPARAM(ref) FText &Text, const FName &StringTableID, const FString &Key);
-
-	UFUNCTION(BlueprintCallable, Category = "BYG|Localization|String Tables", meta = (DisplayName = "Import CSV to String Table"))
-	static void ImportCSVToStringTable(FString CSVFilePath, UStringTable* StringTableAsset);
-
-	UFUNCTION(BlueprintCallable, Category = "BYG|Localization|String Tables", meta = (DisplayName = "Export String Table to CSV"))
-	static void ExportStringTableToCSV(UStringTable* StringTableAsset, FString CSVFilePath);
-
-	UFUNCTION(BlueprintCallable, Category = "BYG|Localization|String Tables", meta = (DisplayName = "Import Default CSV to String Table"))
-	static void ImportDefaultCSVToStringTable();
-
-	UFUNCTION(BlueprintCallable, Category = "BYG|Localization|String Tables", meta = (DisplayName = "Export Default String Table to CSV"))
-	static void ExportDefaultStringTableToCSV();
 
 	UFUNCTION(BlueprintCallable, Category = "BYG|Localization")
 	static void UpdateLocalizationTranslations();
@@ -55,10 +35,22 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "BYG|Localization")
 	static void ReloadLocalization();
 
-	UFUNCTION(BlueprintCallable, Category = "BYG|Localization")
-	static void AddNewEntryToTheLocalization(FString Key, FString SourceString, FString Comment);
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localization", meta = (AutoCreateRefTerm = "Category,Key,SourceString,Comment"))
+	static void AddNewEntryToTheLocalization(const FString &Category, const FString &Key, const FString &SourceString, const FString &Comment);
+
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localization", meta = (AutoCreateRefTerm = "Category,Filename"))
+	static void UpdateCSV(const FString &Categroy, const FString &Filename);
+
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localization", meta = (AutoCreateRefTerm = "LanguageCode,Categroy"))
+	static void GetLocalizationFilePath(const FString &LanguageCode, const FString &Categroy, FString &FilePath);
 
 	UFUNCTION(BlueprintCallable, Category = "BYG|Localization")
-	static void UpdateCSV(FString Filename);
+	static void GetLocalizationLanguageCodes(TArray<FString> &LanguageCodes);
+
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localization")
+	static void GetLocalizationCategories(TArray<FString> &Categories);
+
+	UFUNCTION(BlueprintPure, Category = "BYG|Localization")
+	static FString GetCurrentLanguageCode();
 
 };

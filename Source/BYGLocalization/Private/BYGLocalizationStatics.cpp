@@ -71,156 +71,53 @@ FText UBYGLocalizationStatics::GetGameText( const FString& Key )
 	return Result;
 }
 
-bool UBYGLocalizationStatics::SetLocalizationFromFile( const FString& Path )
+bool UBYGLocalizationStatics::SetLocalizationByCode(const FString& Code)
 {
 	const UBYGLocalizationSettings* Settings = GetDefault<UBYGLocalizationSettings>();
 
-	FStringTableRegistry::Get().UnregisterStringTable( FName( *Settings->StringtableID ) );
-	FStringTableRegistry::Get().Internal_LocTableFromFile(
-		FName( *Settings->StringtableID ),
-		Settings->StringtableNamespace,
-		Path,
-		FPaths::ProjectContentDir() 
-	);
+	if (Code != Settings->PrimaryLanguageCode && !Settings->LanguageCodesInUse.Contains(Code) && Code != "Debug")
+		return false;
+	
+	FBYGLocalizationModule::Get().SetCurrentLanguageCode(Code);
 
-#if !WITH_EDITOR
-	// Only use UE4's locale changing system outside of the editor, or stuff gets weird
-	const FBYGLocaleInfo Basic = FBYGLocalizationModule::Get().GetLocalization()->GetCultureFromFilename( Path );
-	FInternationalization::Get().SetCurrentCulture( Basic.LocaleCode );
-	FInternationalization::Get().SetCurrentLanguageAndLocale( Basic.LocaleCode );
-#endif
+	const TArray<FBYGLocaleInfo> Localizations = FBYGLocalizationModule::Get().GetLocalization()->GetAvailableLocalizations();
 
-	return true;
-}
+	TArray<FString> Categories = Settings->LocalizationCategories;
+	Categories.AddUnique("Game");
 
-bool UBYGLocalizationStatics::SetLocalizationFromAsset(UStringTable* StringTableAsset)
-{
-	const UBYGLocalizationSettings* Settings = GetDefault<UBYGLocalizationSettings>();
+	for (const FString Category : Categories)
+	{
+		FStringTableRegistry::Get().UnregisterStringTable(FName(*Category));
 
-	FStringTableRegistry::Get().UnregisterStringTable(FName(*Settings->StringtableID));
-	FStringTableRegistry::Get().RegisterStringTable(FName(*Settings->StringtableID), StringTableAsset->GetMutableStringTable());
-
-#if !WITH_EDITOR
-	// Only use UE4's locale changing system outside of the editor, or stuff gets weird
-	const FBYGLocaleInfo Basic = FBYGLocalizationModule::Get().GetLocalization()->GetCultureFromFilename(StringTableAsset->GetName());
-	FInternationalization::Get().SetCurrentCulture(Basic.LocaleCode);
-	FInternationalization::Get().SetCurrentLanguageAndLocale(Basic.LocaleCode);
-#endif
-
-	return true;
-}
-
-void UBYGLocalizationStatics::PrintStringTableData(UStringTable* StringTableAsset)
-{
-	if (!StringTableAsset)
-		return;
-
-	FStringTableConstRef StringTable = StringTableAsset->GetStringTable();
-
-	const FString SourceLocation = StringTableAsset->GetPathName();
-
-	StringTable->EnumerateSourceStrings([&](const FString& InKey, const FString& InSourceString) -> bool
+		for (const FBYGLocaleInfo Localization : Localizations)
 		{
-			UE_LOG(LogTemp, Log, TEXT("Key: %s -> SounceString: %s"), *InKey, *InSourceString);
-			
-			FString TestSounceString;
-			StringTable->GetSourceString(InKey, TestSounceString);
-			UE_LOG(LogTemp, Log, TEXT("TestSounceString: %s"), *TestSounceString);
-
-
-			if (!InSourceString.IsEmpty())
+			if (Localization.Category.ToString() == Category && Localization.LocaleCode == Code)
 			{
-// 				FGatherableTextData& GatherableTextData = FindOrAddTextData(InSourceString);
-// 
-// 				FTextSourceSiteContext& SourceSiteContext = GatherableTextData.SourceSiteContexts[GatherableTextData.SourceSiteContexts.AddDefaulted()];
-// 				SourceSiteContext.KeyName = InKey;
-// 				SourceSiteContext.SiteDescription = SourceLocation;
-// 				SourceSiteContext.IsEditorOnly = false;
-// 				SourceSiteContext.IsOptional = false;
+				FStringTableRegistry::Get().Internal_LocTableFromFile(
+					FName(*Category),
+					Category,
+					Localization.FilePath,
+					FPaths::ProjectContentDir()
+				);
 
-				StringTable->EnumerateMetaData(InKey, [&](const FName InMetaDataId, const FString& InMetaData)
-					{
-						UE_LOG(LogTemp, Log, TEXT("MetaDataId: %s -> MetaData: %s"), *InMetaDataId.ToString(), *InMetaData);
-						//SourceSiteContext.InfoMetaData.SetStringField(InMetaDataId.ToString(), InMetaData);
-						return true; // continue enumeration
-					});
+				break;
 			}
+		}
+	}
 
-			return true; // continue enumeration
-		});
+#if !WITH_EDITOR
+	FString UE_Code = (Code == "Debug") ? "en" : Code;
+	FInternationalization::Get().SetCurrentCulture(UE_Code);
+	FInternationalization::Get().SetCurrentLanguageAndLocale(UE_Code);
+#endif
+
+	return true;
 }
 
 void UBYGLocalizationStatics::SetTextAsStringTableEntry(FText &Text, const FName &StringTableID, const FString &Key)
 {
 	//FText::FText(FName InTableId, FString InKey, const EStringTableLoadingPolicy InLoadingPolicy)
 	Text = FText::FromStringTable(StringTableID, Key, EStringTableLoadingPolicy::FindOrLoad);
-}
-
-void UBYGLocalizationStatics::ImportCSVToStringTable(FString CSVFilePath, UStringTable* StringTableAsset)
-{
-	if (StringTableAsset && FPaths::FileExists(CSVFilePath))
-	{
-#if WITH_EDITOR
-		StringTableAsset->Modify();
-#endif
-		StringTableAsset->GetMutableStringTable()->ImportStrings(CSVFilePath);
-	}
-}
-
-void UBYGLocalizationStatics::ExportStringTableToCSV(UStringTable* StringTableAsset, FString CSVFilePath)
-{
-	if (StringTableAsset && FPaths::FileExists(CSVFilePath))
-	{
-		StringTableAsset->GetStringTable()->ExportStrings(CSVFilePath);
-	}
-}
-
-void UBYGLocalizationStatics::ImportDefaultCSVToStringTable()
-{
-	const UBYGLocalizationSettings* Settings = GetDefault<UBYGLocalizationSettings>();
-
-	UStringTable* DefaultStringTable = Settings->MainStringTable.Get();
-
-	if (!DefaultStringTable)
-		return;
-
-	FString FileName = FString::Printf(TEXT("%s%s%s.%s"),
-		*Settings->FilenamePrefix,
-		*Settings->PrimaryLanguageCode,
-		*Settings->FilenameSuffix,
-		*Settings->PrimaryExtension);
-
-	FString FullFilename = FString::Printf(TEXT("%s/%s"),
-		*Settings->PrimaryLocalizationDirectory.Path,
-		*FileName);
-
-	FullFilename = FullFilename.Replace(TEXT("/Game/"), *FPaths::ProjectContentDir());
-
-	ImportCSVToStringTable(FullFilename, DefaultStringTable);
-}
-
-void UBYGLocalizationStatics::ExportDefaultStringTableToCSV()
-{
-	const UBYGLocalizationSettings* Settings = GetDefault<UBYGLocalizationSettings>();
-
-	UStringTable* DefaultStringTable = Settings->MainStringTable.Get();
-
-	if (!DefaultStringTable)
-		return;
-
-	FString FileName = FString::Printf(TEXT("%s%s%s.%s"),
-		*Settings->FilenamePrefix,
-		*Settings->PrimaryLanguageCode,
-		*Settings->FilenameSuffix,
-		*Settings->PrimaryExtension);
-
-	FString FullFilename = FString::Printf(TEXT("%s/%s"),
-		*Settings->PrimaryLocalizationDirectory.Path,
-		*FileName);
-
-	FullFilename = FullFilename.Replace(TEXT("/Game/"), *FPaths::ProjectContentDir());
-
-	ExportStringTableToCSV(DefaultStringTable, FullFilename);
 }
 
 void UBYGLocalizationStatics::UpdateLocalizationTranslations()
@@ -233,12 +130,12 @@ void UBYGLocalizationStatics::ReloadLocalization()
 	FBYGLocalizationModule::Get().ReloadLocalizations();
 }
 
-void UBYGLocalizationStatics::AddNewEntryToTheLocalization(FString Key, FString SourceString, FString Comment)
+void UBYGLocalizationStatics::AddNewEntryToTheLocalization(const FString &Category, const FString &Key, const FString &SourceString, const FString &Comment)
 {
-	const UBYGLocalizationSettings* Settings = GetDefault<UBYGLocalizationSettings>();
-
-	FStringTablePtr StringTable = FStringTableRegistry::Get().FindMutableStringTable(TEXT("Game"));
-
+	if (Category.IsEmpty() || Key.IsEmpty() || SourceString.IsEmpty())
+		return;
+	
+	FStringTablePtr StringTable = FStringTableRegistry::Get().FindMutableStringTable(FName(*Category));
 	if (StringTable.IsValid())
 	{
 		StringTable->SetSourceString(Key, SourceString);
@@ -248,13 +145,61 @@ void UBYGLocalizationStatics::AddNewEntryToTheLocalization(FString Key, FString 
 	}
 }
 
-void UBYGLocalizationStatics::UpdateCSV(FString Filename)
+void UBYGLocalizationStatics::UpdateCSV(const FString &Categroy, const FString &Filename)
 {
-	FStringTablePtr StringTable = FStringTableRegistry::Get().FindMutableStringTable(TEXT("Game"));
+	if (Categroy.IsEmpty() || Filename.IsEmpty())
+		return;
+
+	FStringTablePtr StringTable = FStringTableRegistry::Get().FindMutableStringTable(FName(*Categroy));
 
 	if (StringTable.IsValid())
 	{
 		StringTable->ExportStrings(Filename);
 	}
+}
+
+void UBYGLocalizationStatics::GetLocalizationFilePath(const FString &LanguageCode, const FString &Categroy, FString &FilePath)
+{
+	const TArray<FBYGLocaleInfo> Localizations = FBYGLocalizationModule::Get().GetLocalization()->GetAvailableLocalizations();
+	for (const FBYGLocaleInfo &Localization : Localizations)
+	{
+		if (Localization.LocaleCode == LanguageCode && Localization.Category.ToString() == Categroy)
+		{
+			FilePath = Localization.FilePath;
+			return;
+		}
+	}
+}
+
+void UBYGLocalizationStatics::GetLocalizationLanguageCodes(TArray<FString> &LanguageCodes)
+{
+	LanguageCodes.Reset();
+
+	const UBYGLocalizationSettings* Settings = GetDefault<UBYGLocalizationSettings>();
+	LanguageCodes.Add(Settings->PrimaryLanguageCode);
+
+	for (const FString &LanguageCode : Settings->LanguageCodesInUse)
+	{
+		LanguageCodes.AddUnique(LanguageCode);
+	}
+}
+
+void UBYGLocalizationStatics::GetLocalizationCategories(TArray<FString> &Categories)
+{
+	Categories.Reset();
+
+	const UBYGLocalizationSettings* Settings = GetDefault<UBYGLocalizationSettings>();
+	FString PrimaryCode = Settings->PrimaryLanguageCode;
+	const TArray<FBYGLocaleInfo> Localizations = FBYGLocalizationModule::Get().GetLocalization()->GetAvailableLocalizations();
+	for (const FBYGLocaleInfo &Localization : Localizations)
+	{
+		if(Localization.LocaleCode == PrimaryCode)
+			Categories.AddUnique(Localization.Category.ToString());
+	}
+}
+
+FString UBYGLocalizationStatics::GetCurrentLanguageCode()
+{
+	return FBYGLocalizationModule::Get().GetCurrentLanguageCode();
 }
 

@@ -49,6 +49,16 @@ TArray<FString> UBYGLocalization::GetAllLocalizationFiles() const
 	{
 		Paths.Add( BYGPath.GetDirectoryPath() );
 	}
+	
+// 	TArray<FString> Cultures = Settings->LanguageCodesInUse;
+// 	Cultures.AddUnique(Settings->PrimaryLanguageCode);
+// 	FDirectoryPath NewPath;
+// 	for (const FString& Culture : Cultures)
+// 	{
+// 		NewPath.Path = Settings->PrimaryLocalizationDirectory.Path + "/" + Culture;
+// 		Paths.Add(NewPath);
+// 	}
+
 	for ( const FDirectoryPath& Path : Paths )
 	{
 		IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
@@ -106,40 +116,55 @@ bool UBYGLocalization::UpdateTranslations()
 {
 	QUICK_SCOPE_CYCLE_COUNTER( STAT_BYGLocalization_UpdateTranslations );
 
-	const TArray<FString> Files = GetAllLocalizationFiles();
-
+	const TArray<FBYGLocaleInfo> Localizations = GetAvailableLocalizations();
 	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
 
-	FBYGLocaleData PrimaryData;
-	FString FullFilename = FPaths::Combine( Settings->PrimaryLocalizationDirectory.Path, GetFilenameFromLanguageCode( Settings->PrimaryLanguageCode ) );
-	FullFilename = FullFilename.Replace(TEXT("/Game/"), *FPaths::ProjectContentDir());
-
-	const bool bSucceeded = GetLocalizationDataFromFile( FullFilename, PrimaryData );
-
-	if ( !bSucceeded )
+	TArray<FBYGLocaleInfo> MainLocalizations;
+	for (const FBYGLocaleInfo& Localization : Localizations)
 	{
-		return false;
-	}
-
-	const TArray<FBYGLocalizationEntry>* PrimaryEntriesInOrder = PrimaryData.GetEntriesInOrder();
-	const TMap<FString, int32>* PrimaryKeyToIndex = PrimaryData.GetKeyToIndex();
-	if ( !ensure( PrimaryEntriesInOrder->Num() > 0 ) )
-		return false;
-
-	// Source file is Primary
-	for ( const FString& FileWithPath : Files )
-	{
-		const FString FullPath = FPaths::Combine( FPaths::ProjectContentDir(), FileWithPath );
-		if (FileWithPath.Contains("Debug", ESearchCase::IgnoreCase, ESearchDir::FromStart))
+		if (Localization.LocaleCode == Settings->PrimaryLanguageCode)
 		{
-			UpdateDebugFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
-		}
-		else
-		{
-			UpdateTranslationFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex );
+			MainLocalizations.Add(Localization);
 		}
 	}
 
+	for (FBYGLocaleInfo MainLocalization : MainLocalizations)
+	{
+		FBYGLocaleData PrimaryData;
+		FString FullFilename = FPaths::ProjectContentDir() + MainLocalization.FilePath;
+
+		const bool bSucceeded = GetLocalizationDataFromFile( FullFilename, PrimaryData );
+
+		if ( !bSucceeded )
+		{
+			return false;
+		}
+
+		const TArray<FBYGLocalizationEntry>* PrimaryEntriesInOrder = PrimaryData.GetEntriesInOrder();
+		const TMap<FString, int32>* PrimaryKeyToIndex = PrimaryData.GetKeyToIndex();
+		if ( !ensure( PrimaryEntriesInOrder->Num() > 0 ) )
+			return false;
+
+		// Source file is Primary
+		for ( const FBYGLocaleInfo& Localization : Localizations)
+		{
+			//UE_LOG(LogTemp, Warning, TEXT("Entry: %s / %s / %s / %s"), *Localization.LocaleCode, *Localization.LocalizedName.ToString(), *Localization.Category.ToString(), *Localization.FilePath);
+
+			if (Localization.Category.EqualToCaseIgnored(MainLocalization.Category) && Localization.LocaleCode != MainLocalization.LocaleCode)
+			{
+				const FString FullPath = FPaths::Combine(FPaths::ProjectContentDir(), Localization.FilePath);
+				if (Localization.LocaleCode == "Debug")
+				{
+					UpdateDebugFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
+				}
+				else
+				{
+					UpdateTranslationFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
+				}
+			}
+		}
+
+	}
 	return true;
 }
 
@@ -255,7 +280,7 @@ bool UBYGLocalization::UpdateDebugFile(const FString& Path, const TArray<FBYGLoc
 	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
 	const FString CultureName = RemovePrefixSuffix(Path);
 
-	if (CultureName == Settings->PrimaryLanguageCode || CultureName != "Debug")
+	if (CultureName == Settings->PrimaryLanguageCode || !CultureName.Contains("Debug"))
 		return false;
 
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
@@ -722,14 +747,31 @@ FString UBYGLocalization::RemovePrefixSuffix( const FString& FileWithExtension )
 }
 
 
+void UBYGLocalization::SplitCategoryAndCulture(const FString& CategoryAndCulture, FString &Category, FString &Culture) const
+{
+	if (CategoryAndCulture.Contains("_"))
+	{
+		CategoryAndCulture.Split("_", &Category, &Culture);
+	}
+	else
+	{
+		Category = "Game";
+		Culture = CategoryAndCulture;
+	}
+}
+
 FBYGLocaleInfo UBYGLocalization::GetCultureFromFilename( const FString& FileWithPath ) const
 {
 	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
-	const FString LocaleCode = RemovePrefixSuffix( FileWithPath );
+	const FString CategoryAndLocaleCode = RemovePrefixSuffix( FileWithPath );
+	FString Category;
+	FString LocaleCode;
+
+	SplitCategoryAndCulture(CategoryAndLocaleCode, Category, LocaleCode);
 
 	FText LocalizedName;
 	const FCulturePtr FoundCulture = FInternationalization::Get().GetCulture( LocaleCode );
-	if ( FoundCulture.IsValid() )
+	if ( FoundCulture.IsValid() && LocaleCode != "debug")
 	{
 		LocalizedName = FText::FromString( FoundCulture->GetNativeLanguage() );
 	}
@@ -741,6 +783,7 @@ FBYGLocaleInfo UBYGLocalization::GetCultureFromFilename( const FString& FileWith
 	FBYGLocaleInfo Info {
 		LocaleCode,
 		LocalizedName,
+		FText::FromString(Category),
 		FileWithPath
 	};
 

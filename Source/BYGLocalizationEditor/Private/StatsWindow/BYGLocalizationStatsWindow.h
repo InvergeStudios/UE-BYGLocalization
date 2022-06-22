@@ -25,6 +25,7 @@ public:
 	}
 	FString LocaleCode;
 	FText Language;
+	FText Category;
 	FString Path;
 	int32 NormalEntries;
 	int32 NewEntries;
@@ -157,9 +158,13 @@ public:
 		{
 			return SNew( STextBlock ).Font( ItemEditorFont ).Text( this, &SBYGEntryTableRow::GetLocaleCode );
 		}
-		else if ( ColumnName == TEXT( "Language" ) )
+		else if (ColumnName == TEXT("Language"))
 		{
-			return SNew( STextBlock ).Font( ItemEditorFont ).Text( this, &SBYGEntryTableRow::GetLanguage );
+			return SNew(STextBlock).Font(ItemEditorFont).Text(this, &SBYGEntryTableRow::GetLanguage);
+		}
+		else if (ColumnName == TEXT("Category"))
+		{
+			return SNew(STextBlock).Font(ItemEditorFont).Text(this, &SBYGEntryTableRow::GetCategory);
 		}
 		else if ( ColumnName == TEXT( "Path" ) )
 		{
@@ -235,6 +240,10 @@ private:
 	FText GetLanguage() const
 	{
 		return ItemToEdit->Language;
+	}
+	FText GetCategory() const
+	{
+		return ItemToEdit->Category;
 	}
 	FText GetPath() const
 	{

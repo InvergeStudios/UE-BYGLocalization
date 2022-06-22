@@ -24,6 +24,7 @@ struct FBYGLocaleInfo
 {
 	FString LocaleCode;
 	FText LocalizedName;
+	FText Category;
 	FString FilePath;
 };
 
@@ -116,7 +117,8 @@ protected:
 	// Writes datastructure to CSV but with explicit quoting etc.
 	bool WriteCSV( const TArray<FBYGLocalizationEntry>& Entries, const FString& Filename );
 
-	FString RemovePrefixSuffix( const FString& FileWithExtension ) const;
+	FString RemovePrefixSuffix(const FString& FileWithExtension) const;
+	void SplitCategoryAndCulture(const FString& CategoryAndCulture, FString &Category, FString &Culture) const;
 
 	static FString ReplaceCharWithEscapedChar( const FString& Str );
 

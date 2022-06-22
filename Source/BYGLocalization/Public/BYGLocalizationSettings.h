@@ -83,8 +83,11 @@ public:
 	UPROPERTY( config, EditAnywhere, Category = "Language" )
 	FString PrimaryLanguageCode = "en";
 
-	UPROPERTY(config, EditAnywhere, Category = "Assets")
-	TSoftObjectPtr<UStringTable> MainStringTable;
+	UPROPERTY(config, EditAnywhere, Category = "Language")
+	TArray<FString> LanguageCodesInUse;
+
+	UPROPERTY(config, EditAnywhere, Category = "Language")
+	TArray<FString> LocalizationCategories;
 
 	// Localization files will be searched for in this directory
 	UPROPERTY( config, EditAnywhere, Category = "File Settings", meta = ( ContentDir ) )

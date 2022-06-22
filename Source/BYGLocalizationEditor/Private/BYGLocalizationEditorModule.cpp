@@ -94,19 +94,7 @@ bool FBYGLocalizationEditorModule::HandleSettingsSaved()
 
 void FBYGLocalizationEditorModule::OnEndPIE(const bool bSimulate)
 {
-	//"/Localization/loc_en.csv"
-	UBYGLocalizationSettings* Settings = GetMutableDefault<UBYGLocalizationSettings>();
-	FString Path = Settings->PrimaryLocalizationDirectory.Path;
-
-	if (Path.StartsWith("/Game"))
-	{
-		Path.Split("Game", nullptr, &Path);
-	}
-
-	Path = Path + "/" + Settings->FilenamePrefix + Settings->PrimaryLanguageCode + "." + Settings->PrimaryExtension;
-
-	UE_LOG(LogTemp, Log, TEXT("Path: %s"), *Path);
-	UBYGLocalizationStatics::SetLocalizationFromFile(Path);
+	UBYGLocalizationStatics::SetLocalizationByCode("en");
 }
 
 

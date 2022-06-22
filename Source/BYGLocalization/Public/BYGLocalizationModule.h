@@ -28,6 +28,8 @@ public:
 	virtual void AddReferencedObjects( FReferenceCollector& Collector ) override;
 
 	inline class UBYGLocalization* GetLocalization() { return Loc.Get(); }
+	inline FString GetCurrentLanguageCode() { return CurrentLanguageCode; }
+	inline void SetCurrentLanguageCode(FString InCurrentLanguageCode) { CurrentLanguageCode = InCurrentLanguageCode; }
 
 protected:
 	void UnloadLocalizations();
@@ -37,4 +39,5 @@ protected:
 	TSharedPtr<class UBYGLocalizationSettingsProvider> Provider;
 
 	TArray<FName> StringTableIDs;
+	FString CurrentLanguageCode;
 };

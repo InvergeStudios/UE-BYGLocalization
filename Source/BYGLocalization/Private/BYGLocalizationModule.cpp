@@ -36,6 +36,7 @@ void FBYGLocalizationModule::StartupModule()
 		Loc->UpdateTranslations();
 	}
 
+	CurrentLanguageCode = Settings->PrimaryLanguageCode;
 	ReloadLocalizations();
 }
 
@@ -56,7 +57,7 @@ void FBYGLocalizationModule::ReloadLocalizations()
 
 	// GameStrings is the ID we use for our currently-used string table
 	// For example it could be French if the player has chosen to use French
-	FString Filename = Loc->GetFileWithPathFromLanguageCode(Settings->PrimaryLanguageCode);
+	FString Filename = Loc->GetFileWithPathFromLanguageCode(CurrentLanguageCode);
 
 	UE_LOG(LogTemp, Warning, TEXT("Load Localization file: %s"), *Filename);
 
@@ -64,17 +65,29 @@ void FBYGLocalizationModule::ReloadLocalizations()
 	Filename = Filename.Replace(TEXT("/Game/"), TEXT(""));
 
 	UE_LOG(LogTemp, Warning, TEXT("Load Localization file fixed: %s"), *Filename);
+	
+	TArray<FBYGLocaleInfo> Entries = Loc->GetAvailableLocalizations();
 
+	for (FBYGLocaleInfo Entry : Entries)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Entry: %s / %s / %s / %s"), *Entry.LocaleCode, *Entry.LocalizedName.ToString(), *Entry.Category.ToString(), *Entry.FilePath);
 
-	StringTableIDs.Add( FName( *Settings->StringtableID ) );
-	FStringTableRegistry::Get().Internal_LocTableFromFile( StringTableIDs[ 0 ], Settings->StringtableNamespace, Filename, FPaths::ProjectContentDir() );
+		if (Entry.LocaleCode == CurrentLanguageCode)
+		{
+			StringTableIDs.Add(FName(*Entry.Category.ToString()));
+			FStringTableRegistry::Get().Internal_LocTableFromFile(StringTableIDs[StringTableIDs.Num() - 1], Entry.Category.ToString(), Entry.FilePath, FPaths::ProjectContentDir());
+		}
+	}
+
+	//StringTableIDs.Add( FName( *Settings->StringtableID ) );
+	//FStringTableRegistry::Get().Internal_LocTableFromFile( StringTableIDs[ 0 ], Settings->StringtableNamespace, Filename, FPaths::ProjectContentDir() );
 
 	// We don't want to register this when we're in editor, because we don't want the 'en' language to be shown when selecting FText in Blueprints
 #if !WITH_EDITOR
 	// We always keep the localization for the Primary language in memory and use it as a fallback in case a string is not found in another language
 	{
 		StringTableIDs.Add( FName( *Settings->PrimaryLanguageCode ) );
-		FStringTableRegistry::Get().Internal_LocTableFromFile( StringTableIDs[ 1 ], Settings->StringtableNamespace, Filename, FPaths::ProjectContentDir() );
+		FStringTableRegistry::Get().Internal_LocTableFromFile( StringTableIDs[StringTableIDs.Num()-1], Settings->StringtableNamespace, Filename, FPaths::ProjectContentDir() );
 	}
 #endif
 }

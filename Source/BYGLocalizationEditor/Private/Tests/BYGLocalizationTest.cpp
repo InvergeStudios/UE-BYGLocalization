@@ -106,8 +106,8 @@ bool FBYGLocalizationTest::RunTest( const FString& Parameters )
 
 		const bool bWriteSucceeded = FFileHelper::SaveStringToFile( CSVHeader + Pair.Value.CSVInput, *FilenameWithPath );
 		TestTrue( Pair.Key + " write file", bWriteSucceeded );
-		const bool bSetFileSucceeded = UBYGLocalizationStatics::SetLocalizationFromFile( FilenameWithPath );
-		TestTrue( Pair.Key + " locfile", bSetFileSucceeded );
+// 		const bool bSetFileSucceeded = UBYGLocalizationStatics::SetLocalizationFromFile( FilenameWithPath );
+// 		TestTrue( Pair.Key + " locfile", bSetFileSucceeded );
 
 		ensure( Pair.Value.ExpectedPairs.Num() > 0 );
 		for ( const auto& TextPair : Pair.Value.ExpectedPairs )

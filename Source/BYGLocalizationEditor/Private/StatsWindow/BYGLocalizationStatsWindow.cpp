@@ -106,7 +106,8 @@ void SBYGLocalizationStatsWindow::Construct( const FArguments& InArgs )
 					SNew( SHeaderRow )
 					+ SHeaderRow::Column( "PrimaryLanguage" ).DefaultLabel( LOCTEXT( "PrimaryLanguageColumn", "Primary" ) ).ToolTipText( LOCTEXT( "PrimaryLanguageColumnTooltip", "Primary Language" ) ).FixedWidth( 60 )
 					+ SHeaderRow::Column( "LocaleCode" ).DefaultLabel( LOCTEXT( "LocaleColumn", "Locale Code" ) ).FixedWidth( 80 )
-					+ SHeaderRow::Column( "Language" ).DefaultLabel( LOCTEXT( "LanguageColumn", "Language" ) )
+					+ SHeaderRow::Column( "Language" ).DefaultLabel(LOCTEXT("LanguageColumn", "Language"))
+					+ SHeaderRow::Column( "Category" ).DefaultLabel(LOCTEXT("CategoryColumn", "Category"))
 					+ SHeaderRow::Column( "Path" ).DefaultLabel( LOCTEXT( "PathColumn", "Path" ) )
 					+ SHeaderRow::Column( "Normal" ).DefaultLabel( LOCTEXT( "NormalColumn", "Normal" ) ).HAlignCell( HAlign_Right ).HAlignHeader( HAlign_Right ).FixedWidth( 70 )
 					+ SHeaderRow::Column( "New" ).DefaultLabel( LOCTEXT( "NewColumn", "New" ) ).HAlignCell( HAlign_Right ).HAlignHeader( HAlign_Right ).FixedWidth( 70 )
@@ -259,6 +260,7 @@ FReply SBYGLocalizationStatsWindow::RefreshAll()
 		TSharedRef<FBYGLocalizationStatEntry> NewItem = FBYGLocalizationStatEntry::Create();
 		NewItem->LocaleCode = Entry.LocaleCode;
 		NewItem->Language = Entry.LocalizedName;
+		NewItem->Category = Entry.Category;
 		NewItem->Path = FPaths::Combine( FPaths::ProjectContentDir(), Entry.FilePath );
 		NewItem->bIsRefreshing = true;
 		Items.Add( NewItem );

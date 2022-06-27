@@ -9,8 +9,6 @@
 #include <Internationalization/StringTableCore.h>
 #include <Internationalization/StringTableRegistry.h>
 #include <Internationalization/StringTable.h>
-#include <DesktopPlatform/Public/DesktopPlatformModule.h>
-#include <EditorDirectories.h>
 
 bool UBYGLocalizationStatics::HasTextInTable( const FString& TableName, const FString& Key )
 {

@@ -140,8 +140,8 @@ bool UBYGLocalization::UpdateTranslations()
 
 		const TArray<FBYGLocalizationEntry>* PrimaryEntriesInOrder = PrimaryData.GetEntriesInOrder();
 		const TMap<FString, int32>* PrimaryKeyToIndex = PrimaryData.GetKeyToIndex();
-		if ( !ensure( PrimaryEntriesInOrder->Num() > 0 ) )
-			return false;
+		//if ( !ensure( PrimaryEntriesInOrder->Num() > 0 ) )
+		//	return false;
 
 		// Source file is Primary
 		for ( const FBYGLocaleInfo& Localization : Localizations)

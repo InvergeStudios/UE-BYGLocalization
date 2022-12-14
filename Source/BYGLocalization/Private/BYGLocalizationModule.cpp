@@ -59,18 +59,18 @@ void FBYGLocalizationModule::ReloadLocalizations()
 	// For example it could be French if the player has chosen to use French
 	FString Filename = Loc->GetFileWithPathFromLanguageCode(CurrentLanguageCode);
 
-	UE_LOG(LogBYGLocalization, Warning, TEXT("Load Localization file: %s"), *Filename);
+	UE_LOG(LogBYGLocalization, Verbose, TEXT("[ReloadLocalizations] Load Localization file: %s"), *Filename);
 
 	// Remove any project paths from the filename because Internal_LocTableFromFile will factor them in
 	Filename = Filename.Replace(TEXT("/Game/"), TEXT(""));
 
-	UE_LOG(LogBYGLocalization, Warning, TEXT("Final filename: %s"), *Filename);
+	UE_LOG(LogBYGLocalization, Verbose, TEXT("[ReloadLocalizations] Final filename: %s"), *Filename);
 	
 	TArray<FBYGLocaleInfo> Entries = Loc->GetAvailableLocalizations();
 
 	for (FBYGLocaleInfo Entry : Entries)
 	{
-		UE_LOG(LogBYGLocalization, Warning, TEXT("Entry: %s / %s / %s / %s"), *Entry.LocaleCode, *Entry.LocalizedName.ToString(), *Entry.Category.ToString(), *Entry.FilePath);
+		UE_LOG(LogBYGLocalization, Verbose, TEXT("Entry: %s / %s / %s / %s"), *Entry.LocaleCode, *Entry.LocalizedName.ToString(), *Entry.Category.ToString(), *Entry.FilePath);
 
 		if (Entry.LocaleCode == CurrentLanguageCode)
 		{

@@ -235,6 +235,10 @@ bool UBYGLocalization::UpdateTranslationFile( const FString& Path,
 		{
 			NewLocalizedEntry = OldLocalizedEntry;
 			NewLocalizedEntry.Primary = PrimaryEntry.Translation;
+			const FName A = *OldLocalizedEntry.Primary;
+			const FName B = *PrimaryEntry.Translation;
+			UE_LOG( LogBYGLocalization, Warning, TEXT( "A:'%s' -> B:'%s'" ), *A.ToString(), *B.ToString() );
+				
 			const FString OldPrimary = OldLocalizedEntry.Primary;
 			if ( !OldPrimary.IsEmpty() )
 			{
@@ -248,6 +252,7 @@ bool UBYGLocalization::UpdateTranslationFile( const FString& Path,
 			NewLocalizedEntry = OldLocalizedEntry;
 		}
 
+		NewLocalizedEntry.Comment = PrimaryEntry.Comment;
 		NewEntriesInOrder.Add( NewLocalizedEntry );
 
 	}
@@ -451,6 +456,28 @@ bool UBYGLocalization::GetLocalizationDataFromFile( const FString& Filename, FBY
 		if ( !bValidHeader )
 			return false;
 
+		int32 CommentColumn = INDEX_NONE;
+		int32 PrimaryColumn = INDEX_NONE;
+		int32 StatusColumn = INDEX_NONE;
+		for(int32 i = 0; i < Rows[0].Num(); i++)
+		{
+			if(FString(Rows[0][i]) == TEXT( "Comment" ))
+			{
+				CommentColumn = i;
+				continue;
+			}
+			else if(FString(Rows[0][i]) == TEXT( "Primary" ))
+			{
+				PrimaryColumn = i;
+				continue;
+			}
+			else if(FString(Rows[0][i]) == TEXT( "Status" ))
+			{
+				StatusColumn = i;
+				continue;
+			}
+		}
+		
 		// Note that we skip the header
 		for ( int32 i = 1; i < Rows.Num(); ++i )
 		{
@@ -466,10 +493,10 @@ bool UBYGLocalization::GetLocalizationDataFromFile( const FString& Filename, FBY
 			// Key,Translation,Comment,Primary,Status
 
 			// Not everything has a comment
-			const FString Comment = ( Row.Num() >= 3 ? FString( Row[ 2 ] ) : "" ); //.ReplaceEscapedCharWithChar();
+			const FString Comment = ( CommentColumn != INDEX_NONE && Row.Num() >= CommentColumn ? FString( Row[ CommentColumn ] ) : "" ); //.ReplaceEscapedCharWithChar();
 
 			const FString Key = FString( Row[ 0 ] ); //.ReplaceEscapedCharWithChar();
-			const FString Translation = FString( Row[ 1 ] ); //.ReplaceEscapedCharWithChar();
+			const FString Translation = FString( Row[ 1 ] ).ReplaceEscapedCharWithChar();
 
 #if 0
 			const FRegexPattern RunawayKeyPattern( TEXT( "\n[A-Za-z0-9]+_[A-Za-z0-9_]+," ) );
@@ -481,12 +508,12 @@ bool UBYGLocalization::GetLocalizationDataFromFile( const FString& Filename, FBY
 #endif
 
 			FBYGLocalizationEntry Entry( Key, Translation, Comment );
-			if ( Row.Num() >= 5 )
+			if ( Row.Num() >= PrimaryColumn )
 			{
-				Entry.Primary = FString( Row[ 3 ] ); //.ReplaceEscapedCharWithChar();
+				Entry.Primary = FString( Row[ PrimaryColumn ] ); //.ReplaceEscapedCharWithChar();
 
 
-				const FString Status( Row[ 4 ] );
+				const FString Status = ( StatusColumn != INDEX_NONE && Row.Num() >= StatusColumn ? FString( Row[ StatusColumn ] ) : "" );;
 
 				if ( Status.StartsWith( Settings->DeprecatedStatus ) )
 				{
@@ -639,7 +666,8 @@ bool UBYGLocalization::WriteCSV( const TArray<FBYGLocalizationEntry>& Entries, c
 		// RFC 4180 specifies that double quotes are escaped as ""
 		const FString ExportedKey = ReplaceCharWithEscapedChar( Entry.Key );
 		const FString ExportedTranslation = ReplaceCharWithEscapedChar( Entry.Translation );
-		const FString ExportedComment = ReplaceCharWithEscapedChar( Entry.Comment );
+		const FString Comment = ReplaceCharWithEscapedChar( Entry.Comment );
+		const FString ExportedComment = Comment.IsEmpty() ? "" : Comment;
 		const FString ExportedPrimary = ReplaceCharWithEscapedChar( Entry.Primary );
 
 		FString ExportedStatus = "";
@@ -683,7 +711,7 @@ bool UBYGLocalization::WriteCSV( const TArray<FBYGLocalizationEntry>& Entries, c
 
 TArray<FBYGLocaleInfo> UBYGLocalization::GetAvailableLocalizations() const
 {
-	UE_LOG(LogBYGLocalization, Log, TEXT("GetAvailableLocalizations"));
+	UE_LOG(LogBYGLocalization, VeryVerbose, TEXT("GetAvailableLocalizations"));
 	TArray<FBYGLocaleInfo> Localizations;
 
 	const TArray<FString> Files = GetAllLocalizationFiles();

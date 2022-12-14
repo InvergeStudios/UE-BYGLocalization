@@ -38,11 +38,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "BYG|Localization", meta = (AutoCreateRefTerm = "Category,Key,SourceString,Comment"))
 	static void AddNewEntryToTheLocalization(const FString &Category, const FString &Key, const FString &SourceString, const FString &Comment);
 
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localization", meta = (AutoCreateRefTerm = "Category,Key,SourceString,Comment"))
+	static void RemoveEntryFromLocalization(const FString &Category, const FString &Key);
+	
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localization", meta = (AutoCreateRefTerm = "Category,Key,SourceString"))
+	static bool UpdateLocalizationSourceString(const FString &Category, const FString &Key, const FString &SourceString);
+	
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localization", meta = (AutoCreateRefTerm = "Category,Key,Metadata,Value"))
+	static void UpdateLocalizationEntryMetadata(const FString &Category, const FString &Key, const FName &Metadata, const FString &Value);
+	
 	UFUNCTION(BlueprintCallable, Category = "BYG|Localization", meta = (AutoCreateRefTerm = "Category,Filename"))
-	static void UpdateCSV(const FString &Categroy, const FString &Filename);
+	static void UpdateCSV(const FString &Category, const FString &Filename);
 
 	UFUNCTION(BlueprintCallable, Category = "BYG|Localization", meta = (AutoCreateRefTerm = "LanguageCode,Categroy"))
-	static void GetLocalizationFilePath(const FString &LanguageCode, const FString &Categroy, FString &FilePath);
+	static void GetLocalizationFilePath(const FString &LanguageCode, const FString &Category, FString &FilePath);
 
 	UFUNCTION(BlueprintCallable, Category = "BYG|Localization")
 	static void GetLocalizationLanguageCodes(TArray<FString> &LanguageCodes);

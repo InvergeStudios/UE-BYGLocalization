@@ -133,7 +133,7 @@ void UBYGLocalizationStatics::AddNewEntryToTheLocalization(const FString &Catego
 	if (Category.IsEmpty() || Key.IsEmpty() || SourceString.IsEmpty())
 		return;
 	
-	FStringTablePtr StringTable = FStringTableRegistry::Get().FindMutableStringTable(FName(*Category));
+	const FStringTablePtr StringTable = FStringTableRegistry::Get().FindMutableStringTable(FName(*Category));
 	if (StringTable.IsValid())
 	{
 		StringTable->SetSourceString(Key, SourceString);
@@ -143,12 +143,76 @@ void UBYGLocalizationStatics::AddNewEntryToTheLocalization(const FString &Catego
 	}
 }
 
-void UBYGLocalizationStatics::UpdateCSV(const FString &Categroy, const FString &Filename)
+void UBYGLocalizationStatics::RemoveEntryFromLocalization(const FString& Category, const FString& Key)
 {
-	if (Categroy.IsEmpty() || Filename.IsEmpty())
+	if (Category.IsEmpty() || Key.IsEmpty())
+		return;
+	
+	const FStringTablePtr StringTable = FStringTableRegistry::Get().FindMutableStringTable(FName(*Category));
+	if (StringTable.IsValid())
+	{
+		StringTable->RemoveSourceString(Key);
+	}
+}
+
+bool UBYGLocalizationStatics::UpdateLocalizationSourceString(const FString& Category, const FString& Key, const FString& SourceString)
+{
+	if (Category.IsEmpty() || Key.IsEmpty() || SourceString.IsEmpty())
+		return false;
+
+	const UBYGLocalizationSettings* Settings = GetDefault<UBYGLocalizationSettings>();
+	const FString MainLanguage = Settings->PrimaryLanguageCode;
+	const FString CurrentLanguageCode = FBYGLocalizationModule::Get().GetCurrentLanguageCode();
+	const bool InMainLanguage = MainLanguage == CurrentLanguageCode;
+	
+	const FStringTablePtr StringTable = FStringTableRegistry::Get().FindMutableStringTable(FName(*Category));
+	if (StringTable.IsValid())
+	{
+		FString OldSourceString;
+		StringTable->GetSourceString(Key, OldSourceString);
+
+		if(OldSourceString == SourceString)
+			return false;
+		
+		StringTable->SetSourceString(Key, SourceString);
+
+		if(InMainLanguage)
+		{
+			StringTable->SetMetaData(Key, TEXT("Primary"), SourceString);
+			const FString NewStatus = "Changed SourceString from [" + OldSourceString + "] to [" + SourceString + "]";
+			StringTable->SetMetaData(Key, TEXT("Status"), NewStatus);			
+		}
+		else
+		{
+			StringTable->SetMetaData(Key, TEXT("Status"), FString(""));		
+		}
+		
+		return true;
+	}
+
+	return false;
+}
+
+void UBYGLocalizationStatics::UpdateLocalizationEntryMetadata(const FString& Category, const FString& Key,	const FName &Metadata, const FString &Value)
+{
+	if (Category.IsEmpty() || Key.IsEmpty() ||
+		(!Metadata.IsEqual(TEXT("Comment")) && !Metadata.IsEqual(TEXT("Primary")) && !Metadata.IsEqual(TEXT("Status")))
+		)
+		return;
+	
+	const FStringTablePtr StringTable = FStringTableRegistry::Get().FindMutableStringTable(FName(*Category));
+	if (StringTable.IsValid())
+	{
+		StringTable->SetMetaData(Key, Metadata, Value);
+	}
+}
+
+void UBYGLocalizationStatics::UpdateCSV(const FString &Category, const FString &Filename)
+{
+	if (Category.IsEmpty() || Filename.IsEmpty())
 		return;
 
-	FStringTablePtr StringTable = FStringTableRegistry::Get().FindMutableStringTable(FName(*Categroy));
+	const FStringTablePtr StringTable = FStringTableRegistry::Get().FindMutableStringTable(FName(*Category));
 
 	if (StringTable.IsValid())
 	{
@@ -156,12 +220,12 @@ void UBYGLocalizationStatics::UpdateCSV(const FString &Categroy, const FString &
 	}
 }
 
-void UBYGLocalizationStatics::GetLocalizationFilePath(const FString &LanguageCode, const FString &Categroy, FString &FilePath)
+void UBYGLocalizationStatics::GetLocalizationFilePath(const FString &LanguageCode, const FString &Category, FString &FilePath)
 {
 	const TArray<FBYGLocaleInfo> Localizations = FBYGLocalizationModule::Get().GetLocalization()->GetAvailableLocalizations();
 	for (const FBYGLocaleInfo &Localization : Localizations)
 	{
-		if (Localization.LocaleCode == LanguageCode && Localization.Category.ToString() == Categroy)
+		if (Localization.LocaleCode == LanguageCode && Localization.Category.ToString() == Category)
 		{
 			FilePath = Localization.FilePath;
 			return;

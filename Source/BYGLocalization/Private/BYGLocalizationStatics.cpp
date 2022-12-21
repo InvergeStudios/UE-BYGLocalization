@@ -212,12 +212,67 @@ void UBYGLocalizationStatics::UpdateCSV(const FString &Category, const FString &
 	if (Category.IsEmpty() || Filename.IsEmpty())
 		return;
 
-	const FStringTablePtr StringTable = FStringTableRegistry::Get().FindMutableStringTable(FName(*Category));
+	ExportStrings(FName(*Category), Filename);
+}
 
-	if (StringTable.IsValid())
+bool UBYGLocalizationStatics::ExportStrings(const FName StringTableName, const FString& InFilename)
+{
+	const FStringTablePtr StringTable = FStringTableRegistry::Get().FindMutableStringTable(StringTableName);
+
+	if (!StringTable.IsValid())
 	{
-		StringTable->ExportStrings(Filename);
+		return false;
 	}
+
+	FString ExportedStrings;
+	TArray<FName> MetaDataColumnNames;
+	MetaDataColumnNames.Add(TEXT("Comment"));
+	MetaDataColumnNames.Add(TEXT("Primary"));
+	MetaDataColumnNames.Add(TEXT("Status"));
+
+	{
+		// Write header
+		ExportedStrings += TEXT("Key,SourceString,Comment,Primary,Status\n");
+
+		// Write entries
+		TArray<FString> KeysFromStringTable;
+		StringTable->EnumerateSourceStrings([&](const FString& InKey, const FString& InSourceString) -> bool
+		{			
+			FString ExportedKey = InKey.ReplaceCharWithEscapedChar();
+			ExportedKey.ReplaceInline(TEXT("\""), TEXT("\"\""));
+
+			FString ExportedSourceString = InSourceString.ReplaceCharWithEscapedChar();
+			ExportedSourceString.ReplaceInline(TEXT("\""), TEXT("\"\""));
+
+			ExportedStrings += TEXT("\"");
+			ExportedStrings += ExportedKey;
+			ExportedStrings += TEXT("\"");
+
+			ExportedStrings += TEXT(",");
+
+			ExportedStrings += TEXT("\"");
+			ExportedStrings += ExportedSourceString;
+			ExportedStrings += TEXT("\"");
+
+			for (const FName& MetaDataColumnName : MetaDataColumnNames)
+			{
+				FString ExportedMetaData = StringTable->GetMetaData(InKey, MetaDataColumnName).ReplaceCharWithEscapedChar();
+				ExportedMetaData.ReplaceInline(TEXT("\""), TEXT("\"\""));
+
+				ExportedStrings += TEXT(",");
+
+				ExportedStrings += TEXT("\"");
+				ExportedStrings += ExportedMetaData;
+				ExportedStrings += TEXT("\"");
+			}
+
+			ExportedStrings += TEXT("\n");
+			KeysFromStringTable.Add(InKey);
+			return true; // continue enumeration
+		});
+	}
+
+	return FFileHelper::SaveStringToFile(ExportedStrings, *InFilename);
 }
 
 void UBYGLocalizationStatics::GetLocalizationFilePath(const FString &LanguageCode, const FString &Category, FString &FilePath)

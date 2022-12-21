@@ -50,6 +50,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "BYG|Localization", meta = (AutoCreateRefTerm = "Category,Filename"))
 	static void UpdateCSV(const FString &Category, const FString &Filename);
 
+	static bool ExportStrings(const FName StringTableName, const FString& InFilename);
+
 	UFUNCTION(BlueprintCallable, Category = "BYG|Localization", meta = (AutoCreateRefTerm = "LanguageCode,Categroy"))
 	static void GetLocalizationFilePath(const FString &LanguageCode, const FString &Category, FString &FilePath);
 

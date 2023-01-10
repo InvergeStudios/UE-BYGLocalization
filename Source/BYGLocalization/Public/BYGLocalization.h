@@ -99,9 +99,9 @@ public:
 	FBYGLocaleInfo GetCultureFromFilename( const FString& FileWithPath ) const;
 
 	// Returns an expected filename based on the user settings 
-	FString GetFilenameFromLanguageCode( const FString& LanguageCode ) const;
+	FString GetFilenameFromLanguageCode(const FString& LanguageCode, const FString& Category) const;
 
-	FString GetFileWithPathFromLanguageCode( const FString& LanguageCode ) const;
+	FString GetFileWithPathFromLanguageCode(const FString& LanguageCode, const FString& Category) const;
 
 	bool GetAuthorForLocale( const FString& Filename, FText& Author ) const;
 protected:

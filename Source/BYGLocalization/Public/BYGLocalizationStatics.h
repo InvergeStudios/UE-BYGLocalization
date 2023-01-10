@@ -61,6 +61,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "BYG|Localization")
 	static void GetLocalizationCategories(TArray<FString> &Categories);
 
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localizaton", meta = (ReturnDisplayName = "Category Added"))
+	static bool AddNewCategory(FString CategoryToAdd = "NewCategory");
+
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localizaton", meta = (ReturnDisplayName = "Language Added"))
+	static bool AddNewLanguage(FString NewLanguage = "LanguageCode");
+
 	UFUNCTION(BlueprintPure, Category = "BYG|Localization")
 	static FString GetCurrentLanguageCode();
 

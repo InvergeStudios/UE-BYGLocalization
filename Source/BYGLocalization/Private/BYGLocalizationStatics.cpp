@@ -315,6 +315,58 @@ void UBYGLocalizationStatics::GetLocalizationCategories(TArray<FString> &Categor
 	}
 }
 
+bool UBYGLocalizationStatics::AddNewCategory(FString CategoryToAdd /*= "NewCategory"*/)
+{
+	UBYGLocalizationSettings* Settings = GetMutableDefault<UBYGLocalizationSettings>();
+	
+	if(CategoryToAdd.Contains(TEXT(" ")))
+		return false;
+
+	if (CategoryToAdd != "" && !Settings->LocalizationCategories.Contains(CategoryToAdd))
+	{
+		Settings->LocalizationCategories.AddUnique(CategoryToAdd);
+
+
+		FString LocalizationDirPath = Settings->PrimaryLocalizationDirectory.Path.Replace(TEXT("/Game"), *FPaths::ProjectContentDir());
+		FString FullPath = FString::Printf(TEXT("%s/%s/%s"),
+				*LocalizationDirPath,
+				*Settings->PrimaryLanguageCode,
+				*FBYGLocalizationModule::Get().GetLocalization()->GetFilenameFromLanguageCode(Settings->PrimaryLanguageCode, CategoryToAdd));
+
+		FPaths::RemoveDuplicateSlashes(FullPath);
+		FString ExportedStrings = "Key,SourceString,Comment,Primary,Status\r\n";
+
+		UE_LOG(LogBYGLocalization, Log, TEXT("AddNewCategory: %s"), *FullPath);
+		if (FFileHelper::SaveStringToFile(ExportedStrings, *FullPath))
+		{
+			UpdateLocalizationTranslations();
+		}
+
+		return true;
+	}
+
+
+	return false;
+}
+
+bool UBYGLocalizationStatics::AddNewLanguage(FString NewLanguage /*= "LanguageCode"*/)
+{
+	UBYGLocalizationSettings* Settings = GetMutableDefault<UBYGLocalizationSettings>();
+
+	if (NewLanguage.Contains(TEXT(" ")))
+		return false;
+
+	if (NewLanguage != "" && Settings->PrimaryLanguageCode != NewLanguage && !Settings->LanguageCodesInUse.Contains(NewLanguage))
+	{
+		Settings->LanguageCodesInUse.AddUnique(NewLanguage);
+		UpdateLocalizationTranslations();
+		return true;
+	}
+
+
+	return false;
+}
+
 FString UBYGLocalizationStatics::GetCurrentLanguageCode()
 {
 	return FBYGLocalizationModule::Get().GetCurrentLanguageCode();

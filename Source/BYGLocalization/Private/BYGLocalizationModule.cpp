@@ -55,41 +55,49 @@ void FBYGLocalizationModule::ReloadLocalizations()
 	// TODO provider
 	const UBYGLocalizationSettings* Settings = Provider->GetSettings();
 
-	// GameStrings is the ID we use for our currently-used string table
-	// For example it could be French if the player has chosen to use French
-	FString Filename = Loc->GetFileWithPathFromLanguageCode(CurrentLanguageCode);
+	const TArray<FString> Categories = Settings->LocalizationCategories;
 
-	UE_LOG(LogBYGLocalization, Verbose, TEXT("[ReloadLocalizations] Load Localization file: %s"), *Filename);
+	for (const FString Category : Categories)
+	{
 
-	// Remove any project paths from the filename because Internal_LocTableFromFile will factor them in
-	Filename = Filename.Replace(TEXT("/Game/"), TEXT(""));
+		// GameStrings is the ID we use for our currently-used string table
+		// For example it could be French if the player has chosen to use French
+		FString Filename = Loc->GetFileWithPathFromLanguageCode(CurrentLanguageCode, Category);
 
-	UE_LOG(LogBYGLocalization, Verbose, TEXT("[ReloadLocalizations] Final filename: %s"), *Filename);
+		UE_LOG(LogBYGLocalization, Verbose, TEXT("[ReloadLocalizations] Load Localization file: %s"), *Filename);
+
+		// Remove any project paths from the filename because Internal_LocTableFromFile will factor them in
+		Filename = Filename.Replace(TEXT("/Game/"), TEXT(""));
+
+		UE_LOG(LogBYGLocalization, Verbose, TEXT("[ReloadLocalizations] Final filename: %s"), *Filename);
 	
-	TArray<FBYGLocaleInfo> Entries = Loc->GetAvailableLocalizations();
+		TArray<FBYGLocaleInfo> Entries = Loc->GetAvailableLocalizations();
 
-	for (FBYGLocaleInfo Entry : Entries)
-	{
-		UE_LOG(LogBYGLocalization, Verbose, TEXT("Entry: %s / %s / %s / %s"), *Entry.LocaleCode, *Entry.LocalizedName.ToString(), *Entry.Category.ToString(), *Entry.FilePath);
-
-		if (Entry.LocaleCode == CurrentLanguageCode)
+		for (FBYGLocaleInfo Entry : Entries)
 		{
-			StringTableIDs.Add(FName(*Entry.Category.ToString()));
-			FStringTableRegistry::Get().Internal_LocTableFromFile(StringTableIDs[StringTableIDs.Num() - 1], Entry.Category.ToString(), Entry.FilePath, FPaths::ProjectContentDir());
+			UE_LOG(LogBYGLocalization, Verbose, TEXT("Entry: %s / %s / %s / %s"), *Entry.LocaleCode, *Entry.LocalizedName.ToString(), *Entry.Category.ToString(), *Entry.FilePath);
+
+			if (Entry.LocaleCode == CurrentLanguageCode && Entry.Category.ToString() == Category)
+			{
+				StringTableIDs.Add(FName(*Entry.Category.ToString()));
+				FStringTableRegistry::Get().Internal_LocTableFromFile(StringTableIDs[StringTableIDs.Num() - 1], Entry.Category.ToString(), Entry.FilePath, FPaths::ProjectContentDir());
+			}
 		}
+
+		//StringTableIDs.Add( FName( *Settings->StringtableID ) );
+		//FStringTableRegistry::Get().Internal_LocTableFromFile( StringTableIDs[ 0 ], Settings->StringtableNamespace, Filename, FPaths::ProjectContentDir() );
+
+		// We don't want to register this when we're in editor, because we don't want the 'en' language to be shown when selecting FText in Blueprints
+	#if !WITH_EDITOR
+		// We always keep the localization for the Primary language in memory and use it as a fallback in case a string is not found in another language
+		{
+			StringTableIDs.Add( FName( *Settings->PrimaryLanguageCode ) );
+			FStringTableRegistry::Get().Internal_LocTableFromFile( StringTableIDs[StringTableIDs.Num()-1], Settings->StringtableNamespace, Filename, FPaths::ProjectContentDir() );
+		}
+	#endif
+
 	}
 
-	//StringTableIDs.Add( FName( *Settings->StringtableID ) );
-	//FStringTableRegistry::Get().Internal_LocTableFromFile( StringTableIDs[ 0 ], Settings->StringtableNamespace, Filename, FPaths::ProjectContentDir() );
-
-	// We don't want to register this when we're in editor, because we don't want the 'en' language to be shown when selecting FText in Blueprints
-#if !WITH_EDITOR
-	// We always keep the localization for the Primary language in memory and use it as a fallback in case a string is not found in another language
-	{
-		StringTableIDs.Add( FName( *Settings->PrimaryLanguageCode ) );
-		FStringTableRegistry::Get().Internal_LocTableFromFile( StringTableIDs[StringTableIDs.Num()-1], Settings->StringtableNamespace, Filename, FPaths::ProjectContentDir() );
-	}
-#endif
 }
 
 void FBYGLocalizationModule::UpdateTranslations()

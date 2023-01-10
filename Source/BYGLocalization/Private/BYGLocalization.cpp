@@ -90,24 +90,29 @@ TArray<FString> UBYGLocalization::GetAllLocalizationFiles() const
 	return Files;
 }
 
-FString UBYGLocalization::GetFilenameFromLanguageCode( const FString& LanguageCode ) const
+FString UBYGLocalization::GetFilenameFromLanguageCode(const FString& LanguageCode, const FString& Category) const
 {
 	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
-
-	return FString::Printf( TEXT( "%s%s%s.%s" ),
+	const FString Path = FString::Printf(TEXT("%s%s_%s%s.%s"),
 		*Settings->FilenamePrefix,
+		*Category,
 		*LanguageCode,
 		*Settings->FilenameSuffix,
-		*Settings->PrimaryExtension );
+		*Settings->PrimaryExtension);
+
+	UE_LOG(LogBYGLocalization, Log, TEXT("Path: %s"), *Path);
+	return Path;
 }
 
-FString UBYGLocalization::GetFileWithPathFromLanguageCode( const FString& LanguageCode ) const
+FString UBYGLocalization::GetFileWithPathFromLanguageCode(const FString& LanguageCode, const FString& Category) const
 {
 	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
-
-	return FString::Printf( TEXT( "%s/%s" ),
+	const FString FullPath = FString::Printf(TEXT("%s/%s/%s"),
 		*Settings->PrimaryLocalizationDirectory.Path,
-		*GetFilenameFromLanguageCode(LanguageCode) );
+		*LanguageCode,
+		*GetFilenameFromLanguageCode(LanguageCode, Category));
+	UE_LOG(LogBYGLocalization, Log, TEXT("Fullpath: %s"), *FullPath);
+	return FullPath;
 }
 
 bool UBYGLocalization::UpdateTranslations()
@@ -116,11 +121,13 @@ bool UBYGLocalization::UpdateTranslations()
 
 	const TArray<FBYGLocaleInfo> Localizations = GetAvailableLocalizations();
 	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
+	const FString MainLanguageCode = Settings->PrimaryLanguageCode;
+	const TArray<FString> LanguageCodesInUse = Settings->LanguageCodesInUse;
 
 	TArray<FBYGLocaleInfo> MainLocalizations;
 	for (const FBYGLocaleInfo& Localization : Localizations)
 	{
-		if (Localization.LocaleCode == Settings->PrimaryLanguageCode)
+		if (Localization.LocaleCode == MainLanguageCode)
 		{
 			MainLocalizations.Add(Localization);
 		}
@@ -143,24 +150,101 @@ bool UBYGLocalization::UpdateTranslations()
 		//if ( !ensure( PrimaryEntriesInOrder->Num() > 0 ) )
 		//	return false;
 
-		// Source file is Primary
-		for ( const FBYGLocaleInfo& Localization : Localizations)
+		for (const FString LanguageCode : LanguageCodesInUse)
 		{
-			//UE_LOG(LogTemp, Warning, TEXT("Entry: %s / %s / %s / %s"), *Localization.LocaleCode, *Localization.LocalizedName.ToString(), *Localization.Category.ToString(), *Localization.FilePath);
-
-			if (Localization.Category.EqualToCaseIgnored(MainLocalization.Category) && Localization.LocaleCode != MainLocalization.LocaleCode)
+			//Select Language
+			if (LanguageCode != MainLanguageCode)
 			{
-				const FString FullPath = FPaths::Combine(FPaths::ProjectContentDir(), Localization.FilePath);
-				if (Localization.LocaleCode == "Debug")
+				bool FoundFile = false;
+				//Search for Localization file of that language
+				for (const FBYGLocaleInfo& Localization : Localizations)
 				{
-					UpdateDebugFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
+					//UE_LOG(LogTemp, Warning, TEXT("Entry: %s / %s / %s / %s"), *Localization.LocaleCode, *Localization.LocalizedName.ToString(), *Localization.Category.ToString(), *Localization.FilePath);
+
+					if (Localization.Category.EqualToCaseIgnored(MainLocalization.Category) && Localization.LocaleCode == LanguageCode)
+					{
+						const FString FullPath = FPaths::Combine(FPaths::ProjectContentDir(), Localization.FilePath);
+						UpdateTranslationFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
+						FoundFile = true;
+						break;
+					}
 				}
-				else
+				
+				//Translation file not found. Create a new one.
+				if (!FoundFile)
 				{
-					UpdateTranslationFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
+
+					FString LocalizationDirPath = Settings->PrimaryLocalizationDirectory.Path.Replace(TEXT("/Game"), *FPaths::ProjectContentDir());
+					FString FullPath = FString::Printf(TEXT("%s/%s/%s"),
+						*LocalizationDirPath,
+						*LanguageCode,
+						*GetFilenameFromLanguageCode(LanguageCode, MainLocalization.Category.ToString()));
+
+					FPaths::RemoveDuplicateSlashes(FullPath);
+					FString ExportedStrings = "Key,SourceString,Comment,Primary,Status\r\n";
+
+					UE_LOG(LogBYGLocalization, Log, TEXT("Create full path: %s"), *FullPath);
+					if (FFileHelper::SaveStringToFile(ExportedStrings, *FullPath))
+					{
+						UpdateTranslationFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
+					}
 				}
 			}
 		}
+
+		{
+			bool FoundDebugFile = false;
+			//Update Debug Files
+			for (const FBYGLocaleInfo& Localization : Localizations)
+			{
+				//UE_LOG(LogTemp, Warning, TEXT("Entry: %s / %s / %s / %s"), *Localization.LocaleCode, *Localization.LocalizedName.ToString(), *Localization.Category.ToString(), *Localization.FilePath);
+
+				if (Localization.Category.EqualToCaseIgnored(MainLocalization.Category) && Localization.LocaleCode == "Debug")
+				{
+					const FString FullPath = FPaths::Combine(FPaths::ProjectContentDir(), Localization.FilePath);
+					UpdateDebugFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
+					FoundDebugFile = true;
+					break;
+				}
+			}
+
+			//Translation file not found. Create a new one.
+			if (!FoundDebugFile)
+			{
+				FString LocalizationDirPath = Settings->PrimaryLocalizationDirectory.Path.Replace(TEXT("/Game"), *FPaths::ProjectContentDir());
+
+				FString FullPath = FString::Printf(TEXT("%s/Debug/%s"),
+					*LocalizationDirPath,
+					*GetFilenameFromLanguageCode("Debug", MainLocalization.Category.ToString()));
+
+				FPaths::RemoveDuplicateSlashes(FullPath);
+				FString ExportedStrings = "Key,SourceString,Comment,Primary,Status\r\n";
+
+				UE_LOG(LogBYGLocalization, Log, TEXT("Create debug full path: %s"), *FullPath);
+
+				if (FFileHelper::SaveStringToFile(ExportedStrings, *FullPath))
+					UpdateDebugFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
+			}
+		}
+
+// 		// Source file is Primary
+// 		for ( const FBYGLocaleInfo& Localization : Localizations)
+// 		{
+// 			//UE_LOG(LogTemp, Warning, TEXT("Entry: %s / %s / %s / %s"), *Localization.LocaleCode, *Localization.LocalizedName.ToString(), *Localization.Category.ToString(), *Localization.FilePath);
+// 
+// 			if (Localization.Category.EqualToCaseIgnored(MainLocalization.Category) && Localization.LocaleCode != MainLocalization.LocaleCode)
+// 			{
+// 				const FString FullPath = FPaths::Combine(FPaths::ProjectContentDir(), Localization.FilePath);
+// 				if (Localization.LocaleCode == "Debug")
+// 				{
+// 					UpdateDebugFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
+// 				}
+// 				else
+// 				{
+// 					UpdateTranslationFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
+// 				}
+// 			}
+// 		}
 
 	}
 	return true;

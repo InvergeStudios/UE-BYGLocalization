@@ -80,6 +80,7 @@ void FBYGLocalizationModule::ReloadLocalizations()
 			if (Entry.LocaleCode == CurrentLanguageCode && Entry.Category.ToString() == Category)
 			{
 				StringTableIDs.Add(FName(*Entry.Category.ToString()));
+				FStringTableRegistry::Get().UnregisterStringTable(StringTableIDs[StringTableIDs.Num() - 1]);
 				FStringTableRegistry::Get().Internal_LocTableFromFile(StringTableIDs[StringTableIDs.Num() - 1], Entry.Category.ToString(), Entry.FilePath, FPaths::ProjectContentDir());
 			}
 		}

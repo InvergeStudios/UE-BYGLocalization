@@ -142,7 +142,7 @@ bool UBYGLocalization::UpdateTranslations()
 
 		if ( !bSucceeded )
 		{
-			return false;
+			continue;
 		}
 
 		const TArray<FBYGLocalizationEntry>* PrimaryEntriesInOrder = PrimaryData.GetEntriesInOrder();
@@ -869,7 +869,7 @@ void UBYGLocalization::SplitCategoryAndCulture(const FString& CategoryAndCulture
 {
 	if (CategoryAndCulture.Contains("_"))
 	{
-		CategoryAndCulture.Split("_", &Category, &Culture);
+		CategoryAndCulture.Split("_", &Category, &Culture, ESearchCase::IgnoreCase, ESearchDir::FromEnd);
 	}
 	else
 	{

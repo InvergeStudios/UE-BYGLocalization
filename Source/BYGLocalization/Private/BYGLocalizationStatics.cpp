@@ -325,6 +325,7 @@ bool UBYGLocalizationStatics::AddNewCategory(FString CategoryToAdd /*= "NewCateg
 	if (CategoryToAdd != "" && !Settings->LocalizationCategories.Contains(CategoryToAdd))
 	{
 		Settings->LocalizationCategories.AddUnique(CategoryToAdd);
+		Settings->UpdateDefaultConfigFile();
 
 
 		FString LocalizationDirPath = Settings->PrimaryLocalizationDirectory.Path.Replace(TEXT("/Game"), *FPaths::ProjectContentDir());
@@ -359,6 +360,7 @@ bool UBYGLocalizationStatics::AddNewLanguage(FString NewLanguage /*= "LanguageCo
 	if (NewLanguage != "" && Settings->PrimaryLanguageCode != NewLanguage && !Settings->LanguageCodesInUse.Contains(NewLanguage))
 	{
 		Settings->LanguageCodesInUse.AddUnique(NewLanguage);
+		Settings->UpdateDefaultConfigFile();
 		UpdateLocalizationTranslations();
 		return true;
 	}

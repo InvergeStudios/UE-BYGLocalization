@@ -73,6 +73,7 @@ void FBYGLocalizationModule::ReloadLocalizations()
 	
 		TArray<FBYGLocaleInfo> Entries = Loc->GetAvailableLocalizations();
 
+		bool Found = false;
 		for (FBYGLocaleInfo Entry : Entries)
 		{
 			UE_LOG(LogBYGLocalization, Verbose, TEXT("Entry: %s / %s / %s / %s"), *Entry.LocaleCode, *Entry.LocalizedName.ToString(), *Entry.Category.ToString(), *Entry.FilePath);
@@ -82,8 +83,13 @@ void FBYGLocalizationModule::ReloadLocalizations()
 				StringTableIDs.Add(FName(*Entry.Category.ToString()));
 				FStringTableRegistry::Get().UnregisterStringTable(StringTableIDs[StringTableIDs.Num() - 1]);
 				FStringTableRegistry::Get().Internal_LocTableFromFile(StringTableIDs[StringTableIDs.Num() - 1], Entry.Category.ToString(), Entry.FilePath, FPaths::ProjectContentDir());
+				Found = true;
+				break;
 			}
 		}
+
+		if (Found)
+			continue;
 
 		//StringTableIDs.Add( FName( *Settings->StringtableID ) );
 		//FStringTableRegistry::Get().Internal_LocTableFromFile( StringTableIDs[ 0 ], Settings->StringtableNamespace, Filename, FPaths::ProjectContentDir() );
@@ -92,8 +98,8 @@ void FBYGLocalizationModule::ReloadLocalizations()
 	#if !WITH_EDITOR
 		// We always keep the localization for the Primary language in memory and use it as a fallback in case a string is not found in another language
 		{
-			StringTableIDs.Add( FName( *Settings->PrimaryLanguageCode ) );
-			FStringTableRegistry::Get().Internal_LocTableFromFile( StringTableIDs[StringTableIDs.Num()-1], Settings->StringtableNamespace, Filename, FPaths::ProjectContentDir() );
+			StringTableIDs.Add( FName( *Category) );
+			FStringTableRegistry::Get().Internal_LocTableFromFile( StringTableIDs[StringTableIDs.Num()-1], Category, Filename, FPaths::ProjectContentDir() );
 		}
 	#endif
 

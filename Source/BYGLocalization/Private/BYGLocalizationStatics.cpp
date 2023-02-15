@@ -272,7 +272,7 @@ bool UBYGLocalizationStatics::ExportStrings(const FName StringTableName, const F
 		});
 	}
 
-	return FFileHelper::SaveStringToFile(ExportedStrings, *InFilename);
+	return FFileHelper::SaveStringToFile(ExportedStrings, *InFilename, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
 }
 
 void UBYGLocalizationStatics::GetLocalizationFilePath(const FString &LanguageCode, const FString &Category, FString &FilePath)
@@ -338,7 +338,7 @@ bool UBYGLocalizationStatics::AddNewCategory(FString CategoryToAdd /*= "NewCateg
 		FString ExportedStrings = "Key,SourceString,Comment,Primary,Status\r\n";
 
 		UE_LOG(LogBYGLocalization, Log, TEXT("AddNewCategory: %s"), *FullPath);
-		if (FFileHelper::SaveStringToFile(ExportedStrings, *FullPath))
+		if (FFileHelper::SaveStringToFile(ExportedStrings, *FullPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 		{
 			UpdateLocalizationTranslations();
 		}

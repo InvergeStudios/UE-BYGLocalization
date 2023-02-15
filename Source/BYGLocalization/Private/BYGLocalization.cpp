@@ -184,7 +184,7 @@ bool UBYGLocalization::UpdateTranslations()
 					FString ExportedStrings = "Key,SourceString,Comment,Primary,Status\r\n";
 
 					UE_LOG(LogBYGLocalization, Log, TEXT("Create full path: %s"), *FullPath);
-					if (FFileHelper::SaveStringToFile(ExportedStrings, *FullPath))
+					if (FFileHelper::SaveStringToFile(ExportedStrings, *FullPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 					{
 						UpdateTranslationFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
 					}
@@ -222,7 +222,7 @@ bool UBYGLocalization::UpdateTranslations()
 
 				UE_LOG(LogBYGLocalization, Log, TEXT("Create debug full path: %s"), *FullPath);
 
-				if (FFileHelper::SaveStringToFile(ExportedStrings, *FullPath))
+				if (FFileHelper::SaveStringToFile(ExportedStrings, *FullPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 					UpdateDebugFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
 			}
 		}

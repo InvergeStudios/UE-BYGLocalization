@@ -232,7 +232,7 @@ bool UBYGLocalizationStatics::ExportStrings(const FName StringTableName, const F
 
 	{
 		// Write header
-		ExportedStrings += TEXT("Key,SourceString,Comment,Primary,Status\n");
+		ExportedStrings += TEXT("Key,SourceString,Comment,Primary,Status\r\n");
 
 		// Write entries
 		TArray<FString> KeysFromStringTable;
@@ -266,7 +266,7 @@ bool UBYGLocalizationStatics::ExportStrings(const FName StringTableName, const F
 				ExportedStrings += TEXT("\"");
 			}
 
-			ExportedStrings += TEXT("\n");
+			ExportedStrings += TEXT("\r\n");
 			KeysFromStringTable.Add(InKey);
 			return true; // continue enumeration
 		});

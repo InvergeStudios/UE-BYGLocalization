@@ -51,7 +51,7 @@ protected:
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST( FBYGLocalizationTest, FFunctionalTestBase, "BYG.Localization.Parse", TestFlags )
 bool FBYGLocalizationTest::RunTest( const FString& Parameters )
 {
-	const FString CSVHeader = "Key,SourceString,Comment,Primary,Status\n";
+	const FString CSVHeader = "Key,SourceString,Comment,Primary,Status\r\n";
 
 	struct FBYGTestData
 	{

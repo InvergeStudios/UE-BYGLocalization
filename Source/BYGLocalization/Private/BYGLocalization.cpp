@@ -161,7 +161,7 @@ bool UBYGLocalization::UpdateTranslations()
 				{
 					//UE_LOG(LogTemp, Warning, TEXT("Entry: %s / %s / %s / %s"), *Localization.LocaleCode, *Localization.LocalizedName.ToString(), *Localization.Category.ToString(), *Localization.FilePath);
 
-					if (Localization.Category.EqualToCaseIgnored(MainLocalization.Category) && Localization.LocaleCode == LanguageCode)
+					if (Localization.Category == MainLocalization.Category && Localization.LocaleCode == LanguageCode)
 					{
 						const FString FullPath = FPaths::Combine(FPaths::ProjectContentDir(), Localization.FilePath);
 						UpdateTranslationFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
@@ -178,7 +178,7 @@ bool UBYGLocalization::UpdateTranslations()
 					FString FullPath = FString::Printf(TEXT("%s/%s/%s"),
 						*LocalizationDirPath,
 						*LanguageCode,
-						*GetFilenameFromLanguageCode(LanguageCode, MainLocalization.Category.ToString()));
+						*GetFilenameFromLanguageCode(LanguageCode, MainLocalization.Category));
 
 					FPaths::RemoveDuplicateSlashes(FullPath);
 					FString ExportedStrings = "Key,SourceString,Comment,Primary,Status\r\n";
@@ -199,7 +199,7 @@ bool UBYGLocalization::UpdateTranslations()
 			{
 				//UE_LOG(LogTemp, Warning, TEXT("Entry: %s / %s / %s / %s"), *Localization.LocaleCode, *Localization.LocalizedName.ToString(), *Localization.Category.ToString(), *Localization.FilePath);
 
-				if (Localization.Category.EqualToCaseIgnored(MainLocalization.Category) && Localization.LocaleCode == "Debug")
+				if (Localization.Category == MainLocalization.Category && Localization.LocaleCode == "Debug")
 				{
 					const FString FullPath = FPaths::Combine(FPaths::ProjectContentDir(), Localization.FilePath);
 					UpdateDebugFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
@@ -215,7 +215,7 @@ bool UBYGLocalization::UpdateTranslations()
 
 				FString FullPath = FString::Printf(TEXT("%s/Debug/%s"),
 					*LocalizationDirPath,
-					*GetFilenameFromLanguageCode("Debug", MainLocalization.Category.ToString()));
+					*GetFilenameFromLanguageCode("Debug", MainLocalization.Category));
 
 				FPaths::RemoveDuplicateSlashes(FullPath);
 				FString ExportedStrings = "Key,SourceString,Comment,Primary,Status\r\n";
@@ -792,8 +792,7 @@ bool UBYGLocalization::WriteCSV( const TArray<FBYGLocalizationEntry>& Entries, c
 	return !CSVFileWriter->IsError();
 }
 
-
-TArray<FBYGLocaleInfo> UBYGLocalization::GetAvailableLocalizations() const
+TArray<FBYGLocaleInfo> UBYGLocalization::GetAvailableLocalizations(TOptional<FString> LocaleFilter, TOptional<FString> CategoryFilter) const
 {
 	UE_LOG(LogBYGLocalization, VeryVerbose, TEXT("GetAvailableLocalizations"));
 	TArray<FBYGLocaleInfo> Localizations;
@@ -802,7 +801,11 @@ TArray<FBYGLocaleInfo> UBYGLocalization::GetAvailableLocalizations() const
 	for ( const FString& FileWithPath : Files )
 	{
 		FBYGLocaleInfo Basic = GetCultureFromFilename( FileWithPath );
-		const FString FullPath = FPaths::Combine( FPaths::ProjectContentDir(), FileWithPath );
+		if ((LocaleFilter.IsSet() && Basic.LocaleCode != LocaleFilter.GetValue()) || (CategoryFilter.IsSet() && Basic.Category != CategoryFilter.GetValue()))
+		{
+			continue;
+		}
+		//const FString FullPath = FPaths::Combine( FPaths::ProjectContentDir(), FileWithPath );
 		Localizations.Add( Basic );
 	}
 
@@ -901,7 +904,7 @@ FBYGLocaleInfo UBYGLocalization::GetCultureFromFilename( const FString& FileWith
 	FBYGLocaleInfo Info {
 		LocaleCode,
 		LocalizedName,
-		FText::FromString(Category),
+		Category,
 		FileWithPath
 	};
 

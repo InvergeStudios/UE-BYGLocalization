@@ -89,7 +89,7 @@ bool UBYGLocalizationStatics::SetLocalizationByCode(const FString& Code)
 
 		for (const FBYGLocaleInfo Localization : Localizations)
 		{
-			if (Localization.Category.ToString() == Category && Localization.LocaleCode == Code)
+			if (Localization.Category == Category && Localization.LocaleCode == Code)
 			{
 				FStringTableRegistry::Get().Internal_LocTableFromFile(
 					FName(*Category),
@@ -280,7 +280,7 @@ void UBYGLocalizationStatics::GetLocalizationFilePath(const FString &LanguageCod
 	const TArray<FBYGLocaleInfo> Localizations = FBYGLocalizationModule::Get().GetLocalization()->GetAvailableLocalizations();
 	for (const FBYGLocaleInfo &Localization : Localizations)
 	{
-		if (Localization.LocaleCode == LanguageCode && Localization.Category.ToString() == Category)
+		if (Localization.LocaleCode == LanguageCode && Localization.Category == Category)
 		{
 			FilePath = Localization.FilePath;
 			return;
@@ -311,7 +311,7 @@ void UBYGLocalizationStatics::GetLocalizationCategories(TArray<FString> &Categor
 	for (const FBYGLocaleInfo &Localization : Localizations)
 	{
 		if(Localization.LocaleCode == PrimaryCode)
-			Categories.AddUnique(Localization.Category.ToString());
+			Categories.AddUnique(Localization.Category);
 	}
 }
 

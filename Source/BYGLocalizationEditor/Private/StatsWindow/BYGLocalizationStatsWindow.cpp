@@ -260,7 +260,7 @@ FReply SBYGLocalizationStatsWindow::RefreshAll()
 		TSharedRef<FBYGLocalizationStatEntry> NewItem = FBYGLocalizationStatEntry::Create();
 		NewItem->LocaleCode = Entry.LocaleCode;
 		NewItem->Language = Entry.LocalizedName;
-		NewItem->Category = Entry.Category;
+		NewItem->Category = FText::FromString(Entry.Category);
 		NewItem->Path = FPaths::Combine( FPaths::ProjectContentDir(), Entry.FilePath );
 		NewItem->bIsRefreshing = true;
 		Items.Add( NewItem );

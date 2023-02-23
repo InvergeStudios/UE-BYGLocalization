@@ -56,33 +56,21 @@ void FBYGLocalizationModule::ReloadLocalizations()
 	const UBYGLocalizationSettings* Settings = Provider->GetSettings();
 
 	const TArray<FString> Categories = Settings->LocalizationCategories;
+	const TArray<FBYGLocaleInfo> Entries = Loc->GetAvailableLocalizations(CurrentLanguageCode);
 
 	for (const FString Category : Categories)
 	{
-
-		// GameStrings is the ID we use for our currently-used string table
-		// For example it could be French if the player has chosen to use French
-		FString Filename = Loc->GetFileWithPathFromLanguageCode(CurrentLanguageCode, Category);
-
-		UE_LOG(LogBYGLocalization, Verbose, TEXT("[ReloadLocalizations] Load Localization file: %s"), *Filename);
-
-		// Remove any project paths from the filename because Internal_LocTableFromFile will factor them in
-		Filename = Filename.Replace(TEXT("/Game/"), TEXT(""));
-
-		UE_LOG(LogBYGLocalization, Verbose, TEXT("[ReloadLocalizations] Final filename: %s"), *Filename);
-	
-		TArray<FBYGLocaleInfo> Entries = Loc->GetAvailableLocalizations();
-
 		bool Found = false;
 		for (FBYGLocaleInfo Entry : Entries)
 		{
-			UE_LOG(LogBYGLocalization, Verbose, TEXT("Entry: %s / %s / %s / %s"), *Entry.LocaleCode, *Entry.LocalizedName.ToString(), *Entry.Category.ToString(), *Entry.FilePath);
+			UE_LOG(LogBYGLocalization, Verbose, TEXT("Entry: %s / %s / %s / %s"), *Entry.LocaleCode, *Entry.LocalizedName.ToString(), *Entry.Category, *Entry.FilePath);
 
-			if (Entry.LocaleCode == CurrentLanguageCode && Entry.Category.ToString() == Category)
+			if (/*Entry.LocaleCode == CurrentLanguageCode && */Entry.Category == Category)
 			{
-				StringTableIDs.Add(FName(*Entry.Category.ToString()));
+				UE_LOG(LogBYGLocalization, Verbose, TEXT("[ReloadLocalizations] Load Localization file: %s"), *Entry.FilePath);
+				StringTableIDs.Add(FName(*Category));
 				FStringTableRegistry::Get().UnregisterStringTable(StringTableIDs[StringTableIDs.Num() - 1]);
-				FStringTableRegistry::Get().Internal_LocTableFromFile(StringTableIDs[StringTableIDs.Num() - 1], Entry.Category.ToString(), Entry.FilePath, FPaths::ProjectContentDir());
+				FStringTableRegistry::Get().Internal_LocTableFromFile(StringTableIDs[StringTableIDs.Num() - 1], Category, Entry.FilePath, FPaths::ProjectContentDir());
 				Found = true;
 				break;
 			}
@@ -98,6 +86,9 @@ void FBYGLocalizationModule::ReloadLocalizations()
 	#if !WITH_EDITOR
 		// We always keep the localization for the Primary language in memory and use it as a fallback in case a string is not found in another language
 		{
+			FString Filename = Loc->GetFileWithPathFromLanguageCode("en", Category);
+			Filename = Filename.Replace(TEXT("/Game/"), TEXT(""));
+			UE_LOG(LogBYGLocalization, Verbose, TEXT("[ReloadLocalizations] Load FALLOUT Localization file: %s"), *Filename);
 			StringTableIDs.Add( FName( *Category) );
 			FStringTableRegistry::Get().Internal_LocTableFromFile( StringTableIDs[StringTableIDs.Num()-1], Category, Filename, FPaths::ProjectContentDir() );
 		}

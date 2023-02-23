@@ -24,7 +24,7 @@ struct FBYGLocaleInfo
 {
 	FString LocaleCode;
 	FText LocalizedName;
-	FText Category;
+	FString Category;
 	FString FilePath;
 };
 
@@ -87,7 +87,7 @@ public:
 	void Construct( TSharedPtr<const IBYGLocalizationSettingsProvider> Provider );
 
 	// Returns a map from filename to display name
-	TArray<FBYGLocaleInfo> GetAvailableLocalizations() const;
+	TArray<FBYGLocaleInfo> GetAvailableLocalizations(TOptional<FString> LocaleFilter = TOptional<FString>(), TOptional<FString> CategoryFilter = TOptional<FString>()) const;
 
 	// Returns false when no primary translations found
 	bool UpdateTranslations();

@@ -70,13 +70,15 @@ struct FBYGPath
 };
 
 
-UCLASS( config = BYGLocalization, defaultconfig )
+UCLASS( config = Game, defaultconfig )
 class BYGLOCALIZATION_API UBYGLocalizationSettings : public UObject
 {
 	GENERATED_BODY()
 
 public:
 	UBYGLocalizationSettings( const FObjectInitializer& ObjectInitializer );
+
+	static UBYGLocalizationSettings* Get() { return CastChecked<UBYGLocalizationSettings>(UBYGLocalizationSettings::StaticClass()->GetDefaultObject()); };
 
 	// Two-character language code used to identify the primary language
 	// All other translations will be based on this

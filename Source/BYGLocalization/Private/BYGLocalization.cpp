@@ -33,14 +33,9 @@ FBYGLocaleData::FBYGLocaleData( const TArray<FBYGLocalizationEntry>& NewEntries 
 	}
 }
 
-void UBYGLocalization::Construct( TSharedPtr<const IBYGLocalizationSettingsProvider> InSettingsProvider )
-{
-	SettingsProvider = InSettingsProvider;
-}
-
 TArray<FString> UBYGLocalization::GetAllLocalizationFiles() const
 {
-	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
+	const UBYGLocalizationSettings* Settings = UBYGLocalizationSettings::Get();
 
 	TArray<FString> Files;
 
@@ -92,7 +87,7 @@ TArray<FString> UBYGLocalization::GetAllLocalizationFiles() const
 
 FString UBYGLocalization::GetFilenameFromLanguageCode(const FString& LanguageCode, const FString& Category) const
 {
-	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
+	const UBYGLocalizationSettings* Settings = UBYGLocalizationSettings::Get();
 	const FString Path = FString::Printf(TEXT("%s%s_%s%s.%s"),
 		*Settings->FilenamePrefix,
 		*Category,
@@ -100,18 +95,18 @@ FString UBYGLocalization::GetFilenameFromLanguageCode(const FString& LanguageCod
 		*Settings->FilenameSuffix,
 		*Settings->PrimaryExtension);
 
-	UE_LOG(LogBYGLocalization, Log, TEXT("Path: %s"), *Path);
+	UE_LOG(LogBYGLocalization, Verbose, TEXT("Path: %s"), *Path);
 	return Path;
 }
 
 FString UBYGLocalization::GetFileWithPathFromLanguageCode(const FString& LanguageCode, const FString& Category) const
 {
-	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
+	const UBYGLocalizationSettings* Settings = UBYGLocalizationSettings::Get();
 	const FString FullPath = FString::Printf(TEXT("%s/%s/%s"),
 		*Settings->PrimaryLocalizationDirectory.Path,
 		*LanguageCode,
 		*GetFilenameFromLanguageCode(LanguageCode, Category));
-	UE_LOG(LogBYGLocalization, Log, TEXT("Fullpath: %s"), *FullPath);
+	UE_LOG(LogBYGLocalization, Verbose, TEXT("Fullpath: %s"), *FullPath);
 	return FullPath;
 }
 
@@ -120,7 +115,7 @@ bool UBYGLocalization::UpdateTranslations()
 	QUICK_SCOPE_CYCLE_COUNTER( STAT_BYGLocalization_UpdateTranslations );
 
 	const TArray<FBYGLocaleInfo> Localizations = GetAvailableLocalizations();
-	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
+	const UBYGLocalizationSettings* Settings = UBYGLocalizationSettings::Get();
 	const FString MainLanguageCode = Settings->PrimaryLanguageCode;
 	const TArray<FString> LanguageCodesInUse = Settings->LanguageCodesInUse;
 
@@ -183,7 +178,7 @@ bool UBYGLocalization::UpdateTranslations()
 					FPaths::RemoveDuplicateSlashes(FullPath);
 					FString ExportedStrings = "Key,SourceString,Comment,Primary,Status\r\n";
 
-					UE_LOG(LogBYGLocalization, Log, TEXT("Create full path: %s"), *FullPath);
+					UE_LOG(LogBYGLocalization, Verbose, TEXT("Create full path: %s"), *FullPath);
 					if (FFileHelper::SaveStringToFile(ExportedStrings, *FullPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 					{
 						UpdateTranslationFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
@@ -220,7 +215,7 @@ bool UBYGLocalization::UpdateTranslations()
 				FPaths::RemoveDuplicateSlashes(FullPath);
 				FString ExportedStrings = "Key,SourceString,Comment,Primary,Status\r\n";
 
-				UE_LOG(LogBYGLocalization, Log, TEXT("Create debug full path: %s"), *FullPath);
+				UE_LOG(LogBYGLocalization, Verbose, TEXT("Create debug full path: %s"), *FullPath);
 
 				if (FFileHelper::SaveStringToFile(ExportedStrings, *FullPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 					UpdateDebugFile(FullPath, PrimaryEntriesInOrder, PrimaryKeyToIndex);
@@ -257,7 +252,7 @@ bool UBYGLocalization::UpdateTranslationFile( const FString& Path,
 	QUICK_SCOPE_CYCLE_COUNTER( STAT_BYGLocalization_UpdateTranslationFile );
 
 	// Source file is Primary
-	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
+	const UBYGLocalizationSettings* Settings = UBYGLocalizationSettings::Get();
 	const FString CultureName = RemovePrefixSuffix( Path );
 
 	if ( CultureName == Settings->PrimaryLanguageCode )
@@ -364,7 +359,7 @@ bool UBYGLocalization::UpdateDebugFile(const FString& Path, const TArray<FBYGLoc
 	QUICK_SCOPE_CYCLE_COUNTER(STAT_BYGLocalization_UpdateTranslationFile);
 
 	// Source file is Primary
-	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
+	const UBYGLocalizationSettings* Settings = UBYGLocalizationSettings::Get();
 	const FString CultureName = RemovePrefixSuffix(Path);
 
 	if (CultureName == Settings->PrimaryLanguageCode || !CultureName.Contains("Debug"))
@@ -511,7 +506,7 @@ bool UBYGLocalization::GetLocalizationDataFromFile( const FString& Filename, FBY
 {
 	QUICK_SCOPE_CYCLE_COUNTER( STAT_BYGLocalization_GetLocalizationData );
 
-	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
+	const UBYGLocalizationSettings* Settings = UBYGLocalizationSettings::Get();
 
 	TArray<FBYGLocalizationEntry> NewEntries;
 
@@ -648,7 +643,7 @@ bool UBYGLocalization::GetLocalizationStats( const FString& Filename, BYGLocStat
 		const FCsvParser Parser( CSVData );
 		const FCsvParser::FRows& Rows = Parser.GetRows();
 
-		const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
+		const UBYGLocalizationSettings* Settings = UBYGLocalizationSettings::Get();
 
 		// Note that we skip the header
 		for ( int32 i = 1; i < Rows.Num(); ++i )
@@ -736,7 +731,7 @@ bool UBYGLocalization::WriteCSV( const TArray<FBYGLocalizationEntry>& Entries, c
 		return false;
 	}
 
-	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
+	const UBYGLocalizationSettings* Settings = UBYGLocalizationSettings::Get();
 
 	CSVFileWriter->Logf( TEXT( "Key,SourceString,Comment,Primary,Status" ) );
 
@@ -853,7 +848,7 @@ bool UBYGLocalization::GetLocaleFromPreferences( FBYGLocaleInfo& FoundLocale ) c
 
 FString UBYGLocalization::RemovePrefixSuffix( const FString& FileWithExtension ) const
 {
-	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
+	const UBYGLocalizationSettings* Settings = UBYGLocalizationSettings::Get();
 
 	FString Filename = FPaths::GetBaseFilename( FileWithExtension );
 	if ( !Settings->FilenamePrefix.IsEmpty() )
@@ -883,7 +878,7 @@ void UBYGLocalization::SplitCategoryAndCulture(const FString& CategoryAndCulture
 
 FBYGLocaleInfo UBYGLocalization::GetCultureFromFilename( const FString& FileWithPath ) const
 {
-	const UBYGLocalizationSettings* Settings = SettingsProvider->GetSettings();
+	const UBYGLocalizationSettings* Settings = UBYGLocalizationSettings::Get();
 	const FString CategoryAndLocaleCode = RemovePrefixSuffix( FileWithPath );
 	FString Category;
 	FString LocaleCode;

@@ -12,11 +12,10 @@
 
 void FBYGLocalizationModule::StartupModule()
 {
-	Loc = MakeShareable( new UBYGLocalization() );
-	Provider = MakeShareable( new UBYGLocalizationSettingsProvider() );
-	Loc->Construct( Provider );
+	UE_LOG(LogBYGLocalization, Log, TEXT("Initialize module"));
 
-	const UBYGLocalizationSettings* Settings = Provider->GetSettings();
+	Loc = MakeShareable( new UBYGLocalization() );
+	const UBYGLocalizationSettings* Settings = GetDefault<UBYGLocalizationSettings>();
 
 	bool bDoUpdate = false;
 	const bool bHasCommandLineFlag = !Settings->bUpdateLocsWithCommandLineFlag || FParse::Param( FCommandLine::Get(), *Settings->CommandLineFlag );
@@ -39,6 +38,7 @@ void FBYGLocalizationModule::StartupModule()
 	}
 #endif
 
+	UE_LOG(LogBYGLocalization, Log, TEXT("Reload Localizations"));
 	CurrentLanguageCode = Settings->PrimaryLanguageCode;
 	ReloadLocalizations();
 }
@@ -55,8 +55,7 @@ void FBYGLocalizationModule::ReloadLocalizations()
 {
 	UnloadLocalizations();
 
-	// TODO provider
-	const UBYGLocalizationSettings* Settings = Provider->GetSettings();
+	const UBYGLocalizationSettings* Settings = UBYGLocalizationSettings::Get();
 
 	const TArray<FString> Categories = Settings->LocalizationCategories;
 	const TArray<FBYGLocaleInfo> Entries = Loc->GetAvailableLocalizations(CurrentLanguageCode);
@@ -66,7 +65,7 @@ void FBYGLocalizationModule::ReloadLocalizations()
 		bool Found = false;
 		for (FBYGLocaleInfo Entry : Entries)
 		{
-			UE_LOG(LogBYGLocalization, Verbose, TEXT("Entry: %s / %s / %s / %s"), *Entry.LocaleCode, *Entry.LocalizedName.ToString(), *Entry.Category, *Entry.FilePath);
+			//UE_LOG(LogBYGLocalization, Log, TEXT("Entry: %s / %s / %s / %s"), *Entry.LocaleCode, *Entry.LocalizedName.ToString(), *Entry.Category, *Entry.FilePath);
 
 			if (/*Entry.LocaleCode == CurrentLanguageCode && */Entry.Category == Category)
 			{

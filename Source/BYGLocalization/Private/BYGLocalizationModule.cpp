@@ -31,10 +31,13 @@ void FBYGLocalizationModule::StartupModule()
 		bDoUpdate = true && bHasCommandLineFlag;
 	}
 #endif
+
+#if WITH_EDITOR
 	if ( bDoUpdate || Settings->bForceUpdateTranslations)
 	{
 		Loc->UpdateTranslations();
 	}
+#endif
 
 	CurrentLanguageCode = Settings->PrimaryLanguageCode;
 	ReloadLocalizations();

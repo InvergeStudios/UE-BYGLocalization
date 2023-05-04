@@ -23,7 +23,7 @@ void SBYGLocalizationStatsWindow::Construct( const FArguments& InArgs )
 	[
 		SNew( SBorder )
 		.Padding( 3 )
-		.BorderImage( FEditorStyle::GetBrush( "ToolPanel.GroupBorder" ) )
+		.BorderImage(FAppStyle::GetBrush( "ToolPanel.GroupBorder" ) )
 		[
 			SNew( SVerticalBox )
 			+ SVerticalBox::Slot()
@@ -34,8 +34,8 @@ void SBYGLocalizationStatsWindow::Construct( const FArguments& InArgs )
 				.AutoWidth()
 				[
 					SNew( SButton )
-					.ButtonStyle( FEditorStyle::Get(), "FlatButton.Default" )
-					.TextStyle( FEditorStyle::Get(), "FlatButton.DefaultTextStyle" )
+					.ButtonStyle(FAppStyle::Get(), "FlatButton.Default" )
+					.TextStyle(FAppStyle::Get(), "FlatButton.DefaultTextStyle" )
 					.OnClicked( this, &SBYGLocalizationStatsWindow::RefreshAll )
 					[
 						SNew( SHorizontalBox )
@@ -45,8 +45,8 @@ void SBYGLocalizationStatsWindow::Construct( const FArguments& InArgs )
 						.AutoWidth()
 						[
 							SNew( STextBlock )
-							.Font( FEditorStyle::Get().GetFontStyle( "FontAwesome.11" ) )
-							.TextStyle(FEditorStyle::Get(), "ContentBrowser.TopBar.Font")
+							.Font(FAppStyle::Get().GetFontStyle( "FontAwesome.11" ) )
+							.TextStyle(FAppStyle::Get(), "ContentBrowser.TopBar.Font")
 							.Text( FText::FromString( FString( TEXT( "\xf01e" ) ) ) )
 						]
 						+ SHorizontalBox::Slot()
@@ -385,11 +385,11 @@ const FSlateBrush* SBYGEntryTableRow::GetBackgroundImage() const
 {
 	if ( IsHovered() )
 	{
-		return bIsExpanded ? FEditorStyle::GetBrush( "DetailsView.CategoryTop_Hovered" ) : FEditorStyle::GetBrush( "DetailsView.CollapsedCategory_Hovered" );
+		return bIsExpanded ? FAppStyle::GetBrush( "DetailsView.CategoryTop_Hovered" ) : FAppStyle::GetBrush( "DetailsView.CollapsedCategory_Hovered" );
 	}
 	else
 	{
-		return bIsExpanded ? FEditorStyle::GetBrush( "DetailsView.CategoryTop" ) : FEditorStyle::GetBrush( "DetailsView.CollapsedCategory" );
+		return bIsExpanded ? FAppStyle::GetBrush( "DetailsView.CategoryTop" ) : FAppStyle::GetBrush( "DetailsView.CollapsedCategory" );
 	}
 }
 

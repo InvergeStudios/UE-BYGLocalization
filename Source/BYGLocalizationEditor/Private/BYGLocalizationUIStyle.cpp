@@ -53,7 +53,7 @@ void FBYGLocalizationUIStyle::Initialize()
 	const FSlateFontInfo NormalFont = DEFAULT_FONT( "Regular", FCoreStyle::RegularTextSize );
 
 
-	const FTextBlockStyle NormalText = FEditorStyle::GetWidgetStyle<FTextBlockStyle>( "NormalText" );
+	const FTextBlockStyle NormalText = FAppStyle::GetWidgetStyle<FTextBlockStyle>( "NormalText" );
 
 	StyleSet->Set( "LocalizationStyle.Title", FTextBlockStyle( NormalText )
 		.SetFont( DEFAULT_FONT( "Bold", FCoreStyle::RegularTextSize ) )

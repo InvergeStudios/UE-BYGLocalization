@@ -33,7 +33,7 @@ bool GetTextFromTable( const FString& TableName, const FString& Key, FText& Foun
 		FStringTableEntryConstPtr pEntry = StringTable->FindEntry( *Key );
 		if ( pEntry.IsValid() )
 		{
-			FTextDisplayStringPtr pStr = pEntry->GetDisplayString();
+			FTextConstDisplayStringPtr pStr = pEntry->GetDisplayString();
 			FoundText = FText::FromString( *pStr );
 			return true;
 		}

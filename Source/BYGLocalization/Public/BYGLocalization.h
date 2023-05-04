@@ -60,22 +60,6 @@ protected:
 	TMap<FString, int32> KeyToIndex;
 };
 
-class IBYGLocalizationSettingsProvider
-{
-public:
-	// Make abstract?
-	virtual const UBYGLocalizationSettings* GetSettings() const { return nullptr; }
-};
-
-class UBYGLocalizationSettingsProvider : public IBYGLocalizationSettingsProvider
-{
-public:
-	virtual const UBYGLocalizationSettings* GetSettings() const override
-	{
-		return GetDefault<UBYGLocalizationSettings>();
-	}
-};
-
 typedef TMap<EBYGLocEntryStatus, int32> BYGLocStats;
 
 // Internal data structure used for	updating non-primary localizations based on the information in the primary
@@ -83,8 +67,6 @@ typedef TMap<EBYGLocEntryStatus, int32> BYGLocStats;
 class BYGLOCALIZATION_API UBYGLocalization
 {
 public:
-
-	void Construct( TSharedPtr<const IBYGLocalizationSettingsProvider> Provider );
 
 	// Returns a map from filename to display name
 	TArray<FBYGLocaleInfo> GetAvailableLocalizations(TOptional<FString> LocaleFilter = TOptional<FString>(), TOptional<FString> CategoryFilter = TOptional<FString>()) const;
@@ -105,8 +87,6 @@ public:
 
 	bool GetAuthorForLocale( const FString& Filename, FText& Author ) const;
 protected:
-	// We have a settings provider to allow for easier testing. In production we use GetDefault<UBYGLocalizationSettings>().
-	TSharedPtr<const IBYGLocalizationSettingsProvider> SettingsProvider;
 
 	bool GetLocalizationDataFromFile( const FString& Filename, FBYGLocaleData& LocalizationData ) const;
 	bool UpdateTranslationFile(const FString& Path, const TArray<FBYGLocalizationEntry>* PrimaryEntriesInOrder, const TMap<FString, int32>* PrimaryKeyToIndex);

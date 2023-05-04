@@ -36,18 +36,6 @@ static const int TestFlags = (
 	| EAutomationTestFlags::ClientContext
 	| EAutomationTestFlags::ProductFilter );
 
-
-class UBYGLocalizationSettingsTestProvider : public IBYGLocalizationSettingsProvider
-{
-public:
-	virtual const UBYGLocalizationSettings* GetSettings() const override
-	{
-		return Blah;
-	}
-protected:
-	UBYGLocalizationSettings* Blah;
-};
-
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST( FBYGLocalizationTest, FFunctionalTestBase, "BYG.Localization.Parse", TestFlags )
 bool FBYGLocalizationTest::RunTest( const FString& Parameters )
 {
@@ -206,8 +194,6 @@ bool FBYGWriteCSVTest::RunTest( const FString& Parameters )
 		const FString FilenameWithPath = FPaths::CreateTempFilename( FPlatformProcess::UserTempDir(), TEXT( "BYGLocalizationTest" ), TEXT( ".csv" ) );
 
 		UBYGLocalization* Loc = new UBYGLocalization();
-		TSharedRef<IBYGLocalizationSettingsProvider> Provider;
-		Loc->Construct( Provider );
 		const bool bSuccess = Loc->WriteCSV( Pair.Value.Entries, FilenameWithPath );
 		TestTrue( Pair.Key + " file write " + FilenameWithPath, bSuccess );
 
@@ -257,8 +243,6 @@ bool FBYGFullLoopTest::RunTest( const FString& Parameters )
 	const int32 LoopCount = 3;
 
 	UBYGLocalization* Loc = new UBYGLocalization();
-	TSharedRef<IBYGLocalizationSettingsProvider> Provider;
-	Loc->Construct( Provider );
 
 	for ( const auto& Pair : Data )
 	{

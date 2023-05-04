@@ -36,7 +36,6 @@ protected:
 
 	// TODO FGCObject
 	TSharedPtr<class UBYGLocalization> Loc;
-	TSharedPtr<class UBYGLocalizationSettingsProvider> Provider;
 
 	TArray<FName> StringTableIDs;
 	FString CurrentLanguageCode;

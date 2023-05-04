@@ -15,12 +15,12 @@
 	"IsExperimentalVersion": true,
 	"Installed": false,
 	"Modules": [
-		{
-			"Name": "BYGLocalization",
-			"Type": "Runtime",
-			"LoadingPhase": "PreDefault",
-			"WhitelistPlatforms": [ "Win64", "Mac", "Linux" ]
-		},
+    {
+      "Name": "BYGLocalization",
+      "Type": "Runtime",
+      "LoadingPhase": "PreDefault",
+      "WhitelistPlatforms": [ "Win64", "Mac", "Linux" ]
+    },
 		{
 			"Name": "BYGLocalizationEditor",
 			"Type": "Editor",

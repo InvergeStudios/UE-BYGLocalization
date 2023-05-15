@@ -5,8 +5,9 @@ using UnrealBuildTool;
 public class BYGLocalizationEditor : ModuleRules
 {
 	public BYGLocalizationEditor(ReadOnlyTargetRules Target) : base(Target)
-	{
-		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+    {
+        IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(
 			new string[] {

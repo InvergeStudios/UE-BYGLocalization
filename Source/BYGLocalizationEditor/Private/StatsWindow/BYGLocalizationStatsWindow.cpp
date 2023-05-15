@@ -178,7 +178,7 @@ TSharedPtr<SWidget> SBYGLocalizationStatsWindow::GetListContextMenu()
 	return
 		SNew( SBorder )
 		.Padding( 3 )
-		.BorderImage( FEditorStyle::GetBrush( "DetailsView.AdvancedDropdownBorder" ) )
+		.BorderImage( FAppStyle::GetBrush( "DetailsView.AdvancedDropdownBorder" ) )
 		[
 			SNew( SVerticalBox )
 			+ SVerticalBox::Slot()

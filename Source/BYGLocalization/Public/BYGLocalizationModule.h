@@ -27,6 +27,11 @@ public:
 
 	virtual void AddReferencedObjects( FReferenceCollector& Collector ) override;
 
+	virtual FString GetReferencerName() const override
+	{
+		return TEXT("BYGLocalizationModule");
+	}
+
 	inline class UBYGLocalization* GetLocalization() { return Loc.Get(); }
 	inline FString GetCurrentLanguageCode() { return CurrentLanguageCode; }
 	inline void SetCurrentLanguageCode(FString InCurrentLanguageCode) { CurrentLanguageCode = InCurrentLanguageCode; }

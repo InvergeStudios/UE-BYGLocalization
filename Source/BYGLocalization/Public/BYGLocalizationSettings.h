@@ -6,7 +6,6 @@
 #include "CoreUObject/Public/UObject/NoExportTypes.h"
 #include "Engine/EngineTypes.h"
 #include "Misc/Paths.h"
-#include "Windows/WindowsPlatformProcess.h"
 #include "BYGLocalizationSettings.generated.h"
 
 class UStringTable;

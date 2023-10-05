@@ -18,8 +18,7 @@
     {
       "Name": "BYGLocalization",
       "Type": "Runtime",
-      "LoadingPhase": "PreDefault",
-      "WhitelistPlatforms": [ "Win64", "Mac", "Linux" ]
+      "LoadingPhase": "PreDefault"
     },
 		{
 			"Name": "BYGLocalizationEditor",

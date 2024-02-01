@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Core/Public/Modules/ModuleManager.h"
+#include "Modules/ModuleManager.h"
 #include "UObject/GCObject.h"
 
 class FBYGLocalizationModule : public IModuleInterface, public FGCObject

@@ -466,7 +466,8 @@ void UBYGLocalization::GenerateDebugTranslation(const FString& PrimaryEntry, FSt
 	const int32 Length = PrimaryEntry.Len();
 	const int32 VowelsToAdd = FMath::CeilToInt((float)Length * 1.5f) - Length;
 
-	if ((PrimaryEntry.Contains("<") && PrimaryEntry.Contains(">")) || PrimaryEntry.Contains("|") || PrimaryEntry.Contains("{") || PrimaryEntry.Contains("}"))
+	if ((PrimaryEntry.Contains("<") && PrimaryEntry.Contains(">")) || PrimaryEntry.Contains("|") || PrimaryEntry.Contains("{") || PrimaryEntry.Contains("}")
+		|| PrimaryEntry.Contains("[") || PrimaryEntry.Contains("]"))
 	{
 		DebugTranslation = "[" + PrimaryEntry + "]";
 		return;

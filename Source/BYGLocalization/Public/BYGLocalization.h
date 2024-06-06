@@ -4,7 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Internationalization/Culture.h"
-#include "BYGLocalizationSettings.h"
+#include "Delegates/DelegateCombinations.h"
+#include "BYGLocalization.generated.h"
+
+UDELEGATE()
+DECLARE_DYNAMIC_DELEGATE(FOnLocalizationChangedCallback);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLocalizationChanged);
+
 
 enum class EBYGLocEntryStatus : uint8
 {
@@ -86,6 +92,17 @@ public:
 	FString GetFileWithPathFromLanguageCode(const FString& LanguageCode, const FString& Category) const;
 
 	bool GetAuthorForLocale( const FString& Filename, FText& Author ) const;
+
+	void BindOnLocalizationChanged(const FOnLocalizationChangedCallback& Callback);
+	void UnbindOnLocalizationChanged(const FOnLocalizationChangedCallback& Callback);
+	void UnbindObjectFromOnLocalizationChanged(UObject* ObjectToUnbind);
+
+	void CallOnLocalizationChanged();
+
+public:
+
+	FOnLocalizationChanged OnLocalizationChanged;
+
 protected:
 
 	bool GetLocalizationDataFromFile( const FString& Filename, FBYGLocaleData& LocalizationData ) const;

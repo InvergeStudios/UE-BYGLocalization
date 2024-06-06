@@ -917,3 +917,26 @@ bool UBYGLocalization::GetAuthorForLocale( const FString& Filename, FText& Autho
 	return false;
 }
 
+void UBYGLocalization::BindOnLocalizationChanged(const FOnLocalizationChangedCallback& Callback)
+{
+	OnLocalizationChanged.Add(Callback);
+}
+
+void UBYGLocalization::UnbindOnLocalizationChanged(const FOnLocalizationChangedCallback& Callback)
+{
+	OnLocalizationChanged.Remove(Callback);
+}
+
+void UBYGLocalization::UnbindObjectFromOnLocalizationChanged(UObject* ObjectToUnbind)
+{
+	if (ObjectToUnbind != nullptr)
+	{
+		OnLocalizationChanged.RemoveAll(ObjectToUnbind);
+	}
+}
+
+void UBYGLocalization::CallOnLocalizationChanged()
+{
+	OnLocalizationChanged.Broadcast();
+}
+

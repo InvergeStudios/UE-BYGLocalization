@@ -109,6 +109,8 @@ bool UBYGLocalizationStatics::SetLocalizationByCode(const FString& Code)
 	FInternationalization::Get().SetCurrentLanguageAndLocale(UE_Code);
 #endif
 
+	FBYGLocalizationModule::Get().GetLocalization()->CallOnLocalizationChanged();
+
 	return true;
 }
 
@@ -372,5 +374,20 @@ bool UBYGLocalizationStatics::AddNewLanguage(FString NewLanguage /*= "LanguageCo
 FString UBYGLocalizationStatics::GetCurrentLanguageCode()
 {
 	return FBYGLocalizationModule::Get().GetCurrentLanguageCode();
+}
+
+void UBYGLocalizationStatics::BindOnLocalizationChanged(const FOnLocalizationChangedCallback& Callback)
+{
+	FBYGLocalizationModule::Get().GetLocalization()->BindOnLocalizationChanged(Callback);
+}
+
+void UBYGLocalizationStatics::UnbindOnLocalizationChanged(const FOnLocalizationChangedCallback& Callback)
+{
+	FBYGLocalizationModule::Get().GetLocalization()->UnbindOnLocalizationChanged(Callback);
+}
+
+void UBYGLocalizationStatics::UnbindObjectFromOnLocalizationChanged(UObject* ObjectToUnbind)
+{
+	FBYGLocalizationModule::Get().GetLocalization()->UnbindObjectFromOnLocalizationChanged(ObjectToUnbind);
 }
 

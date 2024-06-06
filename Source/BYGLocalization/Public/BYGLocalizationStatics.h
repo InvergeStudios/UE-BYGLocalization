@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BYGLocalization.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "BYGLocalizationStatics.generated.h"
 
@@ -69,5 +70,14 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "BYG|Localization")
 	static FString GetCurrentLanguageCode();
+
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localization")
+	static void BindOnLocalizationChanged(const FOnLocalizationChangedCallback& Callback);
+
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localization")
+	static void UnbindOnLocalizationChanged(const FOnLocalizationChangedCallback& Callback);
+
+	UFUNCTION(BlueprintCallable, Category = "BYG|Localization", meta = (DefaultToSelf = "ObjectToUnbind"))
+	static void UnbindObjectFromOnLocalizationChanged(UObject* ObjectToUnbind);
 
 };
